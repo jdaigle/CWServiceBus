@@ -22,7 +22,7 @@ namespace CWServiceBus.Serializers.XML {
 
             serializer.Initialize(types);
 
-            Time(new IMessage[] { new C1() { Data = "o'tool" }, new C2() }, serializer);
+            Time(new IMessage[] { new C1() { Data = "o'tool" }, new C2() { Data = "Timmy" } }, serializer);
         }
 
         private void Time(IMessage[] messages, IMessageSerializer serializer) {
