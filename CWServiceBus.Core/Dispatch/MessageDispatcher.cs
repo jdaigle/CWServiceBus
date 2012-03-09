@@ -16,7 +16,6 @@ namespace CWServiceBus.Dispatch {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(MessageDispatcher).Namespace);
 
         public bool DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext, out Exception exception) {
-            dispatchInspector = null;
             using (var childServiceLocator = serviceLocator.GetChildServiceLocator()) {
                 exception = null;
                 try {
