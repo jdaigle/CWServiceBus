@@ -27,7 +27,7 @@ namespace CWServiceBus {
         }
 
         public bool IsMessageType(Type type) {
-            return this.isMessageType.Any(x => x(type));
+            return type != typeof(IMessage) && isMessageType.Any(x => x(type));
         }
     }
 }

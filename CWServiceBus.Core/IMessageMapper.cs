@@ -9,6 +9,8 @@ namespace CWServiceBus
     /// </summary>
     public interface IMessageMapper : IMessageCreator
     {
+        void SetMessageTypeConventions(MessageTypeConventions messageTypeCoventions);
+
         /// <summary>
         /// Initializes the mapper with the given types to be scanned.
         /// </summary>
@@ -29,5 +31,12 @@ namespace CWServiceBus
         /// <param name="typeName"></param>
         /// <returns></returns>
         Type GetMappedTypeFor(string typeName);
+
+        /// <summary>
+        /// Determines if the specified type is a type of message based on conventions
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        bool IsMessageType(Type type);
     }
 }

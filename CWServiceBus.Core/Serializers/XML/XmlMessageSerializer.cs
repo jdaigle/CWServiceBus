@@ -847,8 +847,7 @@ namespace CWServiceBus.Serializers.XML
                 Type baseType = t.BaseType;
                 while (baseType != typeof(object) && baseType != null)
                 {
-                    //TODO Determine if is message
-                    if (typeof(IMessage).IsAssignableFrom(baseType))
+                    if (mapper.IsMessageType(baseType))
                         if (!result.Contains(baseType.FullName))
                             result.Add(baseType.FullName);
 
@@ -856,8 +855,7 @@ namespace CWServiceBus.Serializers.XML
                 }
 
                 foreach (Type i in t.GetInterfaces())
-                    //TODO Determine if is message
-                    if (i != typeof(IMessage) && typeof(IMessage).IsAssignableFrom(i))
+                    if (i != typeof(IMessage) && mapper.IsMessageType(baseType))
                         if (!result.Contains(i.FullName))
                             result.Add(i.FullName);
             }

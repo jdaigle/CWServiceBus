@@ -21,6 +21,10 @@ namespace CWServiceBus.Reflection
     /// </summary>
     public class MessageMapper : IMessageMapper
     {
+        public void SetMessageTypeConventions(MessageTypeConventions messageTypeCoventions) {
+            this.messageTypeCoventions = messageTypeCoventions;
+        }
+
         /// <summary>
         /// Scans the given types generating concrete classes for interfaces.
         /// </summary>
@@ -310,6 +314,12 @@ namespace CWServiceBus.Reflection
                 return constructor.Invoke(null);
 
             return FormatterServices.GetUninitializedObject(mapped);
+        }
+
+        private MessageTypeConventions messageTypeCoventions = MessageTypeConventions.Default;
+
+        public bool IsMessageType(Type type) {
+            return messageTypeCoventions.IsMessageType(type);
         }
 
         private static readonly string SUFFIX = "__Impl";
