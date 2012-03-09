@@ -13,7 +13,7 @@ namespace CWServiceBus
         /// <summary>
         /// The address of the endpoint that sent the current message being handled.
         /// </summary>
-        string ReplyToService { get; }
+        string ReturnAddress { get; }
 
         /// <summary>
         /// Returns the time at which the message was sent.

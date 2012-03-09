@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace CWServiceBus {
     public class MessageDispatcherEventArgs : EventArgs {
+        public IMessageContext messageContext { get; set; }
         public IEnumerable<object> Messages { get; set; }
         /// <summary>
         /// Only Valid for "Dispatched" event.

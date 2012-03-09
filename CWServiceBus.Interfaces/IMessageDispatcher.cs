@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace CWServiceBus {
     public interface IMessageDispatcher {
         /// <returns>True if messages dispatched without error, False othewise</returns>
-        bool DispatchMessages(IEnumerable<object> messages, string messageBatchId, out Exception exception);
+        bool DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext, out Exception exception);
         /// <summary>
         /// Fired before the the message is dispatched to message handlers
         /// </summary>
