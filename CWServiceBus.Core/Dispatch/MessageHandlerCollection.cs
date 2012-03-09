@@ -36,35 +36,15 @@ namespace CWServiceBus.Dispatch {
             return types.Distinct().ToList();
         }
 
-        private List<Func<Type, bool>> isMessageTypeConventions = new List<Func<Type, bool>>();
+        private MessageTypeConventions messageTypeConventions;
 
         public MessageHandlerCollection() {
-            isMessageTypeConventions.Add(x => typeof(IMessage).IsAssignableFrom(x));
+            this.messageTypeConventions = MessageTypeConventions.Default;
         }
 
-        public MessageHandlerCollection(IEnumerable<Func<Type, bool>> isMessageTypeConventions)
-            : this() {
-            this.isMessageTypeConventions.AddRange(isMessageTypeConventions);
+        public MessageHandlerCollection(MessageTypeConventions messageTypeConventions) {
+            this.messageTypeConventions = messageTypeConventions;
         }
-
-        public void AddMessageTypeConvention(Func<Type, bool> isMessageTypeConvention) {
-            AssertNotInit();
-            this.isMessageTypeConventions.Add(isMessageTypeConvention);
-        }
-
-        public void AddMessageTypeConventions(IEnumerable<Func<Type, bool>> isMessageTypeConventions) {
-            AssertNotInit();
-            this.isMessageTypeConventions.AddRange(isMessageTypeConventions);
-        }
-
-        public bool IsMessageType(Type type) {
-            return this.isMessageTypeConventions.Any(x => x(type));
-        }
-
-        public bool IsMessageType<T>() {
-            return this.isMessageTypeConventions.Any(x => x(typeof(T)));
-        }
-
 
         private void AssertNotInit() {
             if (isInit) throw new InvalidOperationException("Collection already initialized");
@@ -99,11 +79,11 @@ namespace CWServiceBus.Dispatch {
             }
 
             if (messageType.IsClass && messageType.BaseType != typeof(object)) {
-                if (IsMessageType(messageType.BaseType))
+                if (messageTypeConventions.IsMessageType(messageType.BaseType))
                     RegisterDispatchHandler(messageType.BaseType, messageHandlerTypes);
             }
             foreach (var _interface in messageType.GetInterfaces()) {
-                if (IsMessageType(_interface))
+                if (messageTypeConventions.IsMessageType(_interface))
                     RegisterDispatchHandler(_interface, messageHandlerTypes);
             }
         }

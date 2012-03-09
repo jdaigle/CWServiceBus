@@ -10,9 +10,10 @@ namespace CWServiceBus.Dispatch {
 
         [TestFixtureSetUp]
         public void RegisterAssemblyMessageHandlers() {
-            messageHandlerCollection = new MessageHandlerCollection();
+            var conventions = new MessageTypeConventions();
+            conventions.AddConvention(x => x.IsInterface && x.Namespace == "CWServiceBus.Dispatch.TestData");
+            messageHandlerCollection = new MessageHandlerCollection(conventions);
             messageHandlerCollection.AddAssemblyToScan(GetType().Assembly);
-            messageHandlerCollection.AddMessageTypeConvention(x => x.IsInterface && x.Namespace == "CWServiceBus.Dispatch.TestData");
             messageHandlerCollection.Init();
         }
 
@@ -23,9 +24,10 @@ namespace CWServiceBus.Dispatch {
 
         [Test]
         public void Supports_Conventions() {
-            messageHandlerCollection = new MessageHandlerCollection();
+            var conventions = new MessageTypeConventions();
+            conventions.AddConvention(x => x.Name.EndsWith("MessageWithoutHandler"));
+            messageHandlerCollection = new MessageHandlerCollection(conventions);
             messageHandlerCollection.AddAssemblyToScan(GetType().Assembly);
-            messageHandlerCollection.AddMessageTypeConvention(x => x.Name.EndsWith("MessageWithoutHandler"));
             messageHandlerCollection.Init();
             messageHandlerCollection.AllMessageTypes().Contains(typeof(MessageWithoutHandler));
             Assert.IsEmpty(messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithoutHandler)));

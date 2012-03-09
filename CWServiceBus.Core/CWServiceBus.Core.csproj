@@ -47,6 +47,7 @@
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
     <Compile Include="IMessageMapper.cs" />
+    <Compile Include="MessageTypeConventions.cs" />
     <Compile Include="Reflection\DelegateFactory.cs" />
     <Compile Include="Reflection\ExtensionMethods.cs" />
     <Compile Include="Reflection\MessageMapper.cs" />
