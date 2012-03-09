@@ -1,0 +1,2 @@
+Some code is derived from NServiceBus 2.0 (https://github.com/NServiceBus/NServiceBus/tree/2.0/)
+which is licensed under Apache Licence, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
