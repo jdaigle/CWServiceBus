@@ -1,4 +1,4 @@
-/* This code is derived from the MessageMapper class in NServiceBus 2.0 
+/* This code is derived from NServiceBus 2.0 
  * https://github.com/NServiceBus/NServiceBus/blob/2.0/src/impl/messageInterfaces/NServiceBus.MessageInterfaces.MessageMapper.Reflection/MessageMapper.cs
  * 
  * Which is licensed under Apache Licence, Version 2.0
@@ -317,6 +317,6 @@ namespace CWServiceBus.Reflection
         private static readonly Dictionary<Type, Type> concreteToInterfaceTypeMapping = new Dictionary<Type, Type>();
         private static readonly Dictionary<string, Type> nameToType = new Dictionary<string, Type>();
         private static readonly Dictionary<Type, ConstructorInfo> typeToConstructor = new Dictionary<Type, ConstructorInfo>();
-        private static ILog Logger = LogManager.GetLogger(typeof(MessageMapper));
+        private static ILog Logger = LogManager.GetLogger(typeof(MessageMapper).Namespace);
     }
 }

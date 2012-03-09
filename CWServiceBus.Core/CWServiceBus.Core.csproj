@@ -47,9 +47,11 @@
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
     <Compile Include="IMessageMapper.cs" />
+    <Compile Include="Reflection\DelegateFactory.cs" />
     <Compile Include="Reflection\ExtensionMethods.cs" />
     <Compile Include="Reflection\MessageMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializers\XML\XmlMessageSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
