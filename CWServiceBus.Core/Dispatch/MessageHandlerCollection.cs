@@ -8,6 +8,7 @@ namespace CWServiceBus.Dispatch {
 
         private bool isInit;
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();
+        private ISet<Type> additionalMessageTypes = new HashSet<Type>();
         private IDictionary<Type, IList<DispatchInfo>> messageHandlers = new Dictionary<Type, IList<DispatchInfo>>();
 
         /// <summary>
@@ -57,7 +58,8 @@ namespace CWServiceBus.Dispatch {
         public void Init() {
             if (isInit) return;
             var messageHandlerTypes = FindAllMessageHandlerTypes(assembliesToScan);
-            var messageTypes = FindAllMessageTypesForDispatch(messageHandlerTypes);
+            IEnumerable<Type> messageTypes = FindAllMessageTypesForDispatch(messageHandlerTypes);
+            messageTypes = messageTypes.Concat(additionalMessageTypes).Distinct();
             foreach (var messageType in messageTypes) {
                 RegisterDispatchHandler(messageType, messageHandlerTypes);
             }
@@ -120,6 +122,23 @@ namespace CWServiceBus.Dispatch {
             AddAssembliesToScan(new[] { messageHandlerAssembly });
         }
 
+        public void AddAdditonalMessageTypes(IEnumerable<Type> messageTypes) {
+            AssertNotInit();
+            foreach (var type in messageTypes) {
+                additionalMessageTypes.Add(type);
+            }
+        }
+
+        public void AddAdditonalMessageTypes(params Type[] messageTypes) {
+            AssertNotInit();
+            AddAdditonalMessageTypes((IEnumerable<Type>)messageTypes);
+        }
+
+        public void AddAdditonalMessageType(Type messageType) {
+            AssertNotInit();
+            AddAdditonalMessageTypes(new[] { messageType });
+        }
+
         public IEnumerable<Type> AllMessageTypes() {
             AssertInit();
             return messageHandlers.Keys;
@@ -133,5 +152,51 @@ namespace CWServiceBus.Dispatch {
                 return new DispatchInfo[0];
             }
         }
+
+        /* AFTER THIS LINE IS POSSIBLE NEW IMPLEMENTATION */
+
+        /// <summary>
+        /// Evaluates a type and loads it if it implements IMessageHander{T}.
+        /// </summary>
+        /// <param name="handler">The type to evaluate.</param>
+        void IfTypeIsMessageHandlerThenLoad(Type handler) {
+            if (handler.IsAbstract)
+                return;
+
+
+            foreach (var messageType in GetMessageTypesIfIsMessageHandler(handler)) {
+                if (!handlerList.ContainsKey(handler))
+                    handlerList.Add(handler, new List<Type>());
+
+                if (!(handlerList[handler].Contains(messageType))) {
+                    handlerList[handler].Add(messageType);
+                    Log.DebugFormat("Associated '{0}' message with '{1}' handler", messageType, handler);
+                }
+
+                HandlerInvocationCache.CacheMethodForHandler(handler, messageType);
+            }
+        }
+
+
+        /// <summary>
+        /// If the type is a message handler, returns all the message types that it handles
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private static IEnumerable<Type> GetMessageTypesIfIsMessageHandler(Type type) {
+            foreach (var t in type.GetInterfaces()) {
+                if (t.IsGenericType) {
+                    var args = t.GetGenericArguments();
+                    if (args.Length != 1)
+                        continue;
+
+                    var handlerType = typeof(IMessageHandler<>).MakeGenericType(args[0]);
+                    if (handlerType.IsAssignableFrom(t))
+                        yield return args[0];
+                }
+            }
+        }
+
+        private readonly IDictionary<Type, List<Type>> handlerList = new Dictionary<Type, List<Type>>();
     }
 }

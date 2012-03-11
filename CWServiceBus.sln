@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Samples.Messag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Samples.RequestServerService", "Samples\CWServiceBus.Samples.RequestServerService\CWServiceBus.Samples.RequestServerService.csproj", "{61B49334-C825-46FB-B281-9087BBBD4DB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.StructureMap", "CWServiceBus.StructureMap\CWServiceBus.StructureMap.csproj", "{0596F84B-5850-4139-8A44-1EDF87598361}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,16 @@ Global
 		{61B49334-C825-46FB-B281-9087BBBD4DB6}.Release|Mixed Platforms.Build.0 = Release|x86
 		{61B49334-C825-46FB-B281-9087BBBD4DB6}.Release|x86.ActiveCfg = Release|x86
 		{61B49334-C825-46FB-B281-9087BBBD4DB6}.Release|x86.Build.0 = Release|x86
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0596F84B-5850-4139-8A44-1EDF87598361}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,37 +1,64 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CWServiceBus.ServiceBroker;
-using CWServiceBus.Unicast;
-using CWServiceBus.Reflection;
-using CWServiceBus.Dispatch;
+using System.Reflection;
+using System.Threading;
 using CWServiceBus.Samples.Messages;
-using CWServiceBus.Serializers.XML;
+using CWServiceBus.ServiceBroker;
+using CWServiceBus.StructureMap;
+using StructureMap;
+using CWServiceBus.Dispatch;
 
 namespace CWServiceBus.Samples.RequestServerService {
     public class Program {
         public static void Main() {
-            //var serviceBus = ServiceBusBuilder.Initialize(builder => {
-            //    builder.MessageTypeConventions.AddConvention(t => t.Namespace == "CWServiceBus.Samples.Messages");
-            //});
-            
-            var messageTypeConventions = new MessageTypeConventions();
-            IEnumerable<Type> additionalMessageTypes = new Type[0];
+            log4net.Config.XmlConfigurator.Configure();
 
-            var messageHandlers = new MessageHandlerCollection(messageTypeConventions);
-            messageHandlers.AddAssemblyToScan(typeof(MyRequest).Assembly);
-            messageHandlers.Init();
+            var container = new Container(i => {
+    //            i.ForSingletonOf<IDispatchInspector>().Use<UnitOfWorkDispatchInspector>();
+            });            
 
-            var messageMapper = new MessageMapper();
-            messageMapper.SetMessageTypeConventions(messageTypeConventions);
-            messageMapper.Initialize(messageHandlers.AllMessageTypes().Concat(additionalMessageTypes).Distinct());
+            var serviceBus = ServiceBusBuilder.Initialize(builder => {
+                builder.ServiceLocator = new StructureMapServiceLocator(container);
+                builder.MessageTypeConventions.AddConvention(t => t.Namespace == "CWServiceBus.Samples.Messages");
+                builder.AddAssembliesToScan(Assembly.Load("CWServiceBus.Samples.RequestServerService"));
+                builder.UseServiceBrokerTransport(t => {
+                    t.ListenerQueue = "CWServiceBusTestQueue";
+                    t.ReturnAddress = "[//CWServiceBus/Test]";
+                    t.NumberOfWorkerThreads = 1;
+                    t.ServiceBrokerConnectionString = "Data Source=localhost;Initial Catalog=ServiceBus;Trusted_Connection=true";
+                });
+            });
 
-            var serializer = new XmlMessageSerializer(messageMapper);
-            serializer.Initialize(messageHandlers.AllMessageTypes().Concat(additionalMessageTypes).Distinct());
+            serviceBus.Start();
 
-            var serviceBus = new UnicastServiceBus();
-
+            while (true) {
+                Thread.Sleep(5000);
+                serviceBus.Send<MyRequest>("[//CWServiceBus/Test]", x => {
+                    x.MyRequestId = Guid.NewGuid();
+                    x.MyRequestData = Guid.NewGuid().ToString();
+                });
+            }
         }
     }
+
+    public class UnitOfWorkDispatchInspector : IDispatchInspector {
+        public void OnDispatching(IServiceLocator childServiceLocator, IMessageContext messageContext) {
+            return;
+        }
+
+        public void OnDispatched(IServiceLocator childServiceLocator, IMessageContext messageContext, bool withError) {
+            return;
+        }
+
+        public void OnDispatchException(IServiceLocator childServiceLocator, IMessageContext messageContext, Exception exception) {
+            return;
+        }
+    }
+
+
+    public class TestHandler : IMessageHandler<MyRequest> {
+        public void Handle(MyRequest message) {
+            Thread.Sleep(1000);
+        }
+    }
+
 }

@@ -11,13 +11,13 @@ namespace CWServiceBus.Dispatch {
         }
 
         private IServiceLocator serviceLocator;
-        private IDispatchInspector dispatchInspector;
+        private IEnumerable<IDispatchInspector> dispatchInspectors;
         private MessageHandlerCollection messageHandlers;
         private static readonly ILog Logger = LogManager.GetLogger(typeof(MessageDispatcher).Namespace);
 
-        public bool DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext, out Exception exception) {
+        public void DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext) {
             using (var childServiceLocator = serviceLocator.GetChildServiceLocator()) {
-                exception = null;
+                Exception exception = null;
                 try {
                     OnDispatching(childServiceLocator, messages, messageContext);
                     foreach (var message in messages) {
@@ -31,18 +31,18 @@ namespace CWServiceBus.Dispatch {
                     Logger.Warn("Failed Dispatching Messages for message with ID=" + messageContext.MessageId, e);
                     exception = e;
                     OnDispatchException(childServiceLocator, messages, messageContext, e);
-                    return false;
+                    throw;
                 } finally {
                     OnDispatched(childServiceLocator, messages, messageContext, exception != null);
                 }
             }
-            return true;
         }
 
         private void OnDispatching(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext) {
-            if (dispatchInspector == null) dispatchInspector = serviceLocator.Get<IDispatchInspector>();
-            if (dispatchInspector != null)
-                dispatchInspector.OnDispatching(childServiceLocator, messageContext);
+            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
+            if (dispatchInspectors != null)
+                foreach (var dispatchInspector in dispatchInspectors)
+                    dispatchInspector.OnDispatching(childServiceLocator, messageContext);
             if (Dispatching != null) {
                 Dispatching(this, new MessageDispatcherEventArgs() {
                     Messages = messages,
@@ -51,9 +51,10 @@ namespace CWServiceBus.Dispatch {
         }
 
         private void OnDispatched(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, bool withError) {
-            if (dispatchInspector == null) dispatchInspector = serviceLocator.Get<IDispatchInspector>();
-            if (dispatchInspector != null)
-                dispatchInspector.OnDispatched(childServiceLocator, messageContext, withError);
+            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
+            if (dispatchInspectors != null)
+                foreach (var dispatchInspector in dispatchInspectors)
+                    dispatchInspector.OnDispatched(childServiceLocator, messageContext, withError);
             if (Dispatched != null) {
                 Dispatched(this, new MessageDispatcherEventArgs() {
                     Messages = messages,
@@ -63,9 +64,10 @@ namespace CWServiceBus.Dispatch {
         }
 
         private void OnDispatchException(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, Exception e) {
-            if (dispatchInspector == null) dispatchInspector = serviceLocator.Get<IDispatchInspector>();
-            if (dispatchInspector != null)
-                dispatchInspector.OnDispatchException(childServiceLocator, messageContext, e);
+            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
+            if (dispatchInspectors != null)
+                foreach (var dispatchInspector in dispatchInspectors)
+                    dispatchInspector.OnDispatchException(childServiceLocator, messageContext, e);
             if (DispatchException != null) {
                 DispatchException(this, new MessageDispatcherEventArgs() {
                     Messages = messages,

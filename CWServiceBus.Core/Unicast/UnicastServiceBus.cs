@@ -6,12 +6,35 @@ using CWServiceBus.Transport;
 using log4net;
 
 namespace CWServiceBus.Unicast {
-    public class UnicastServiceBus : IServiceBus {
+    public class UnicastServiceBus : IServiceBus, IStartableServiceBus {
 
         private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastServiceBus).Namespace);
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
         private ITransport transport;
+        private IMessageDispatcher messageDispatcher;
+
+        public UnicastServiceBus() { }
+
+        public UnicastServiceBus(IMessageMapper messageMapper, ITransport transport, IMessageDispatcher messageDispatcher, ISubscriptionStorage subscriptionStorage) {
+            this.messageMapper = messageMapper;
+            this.Transport = transport;
+            this.messageDispatcher = messageDispatcher;
+            this.subscriptionStorage = subscriptionStorage;
+        }
+
+        public ITransport Transport {
+            get { return transport; }
+            set {
+                if (transport != null) {
+                    transport.TransportMessageReceived -= Transport_TransportMessageReceived;
+                }
+                transport = value;
+                if (transport != null) {
+                    transport.TransportMessageReceived += Transport_TransportMessageReceived;
+                }
+            }
+        }
 
         /// <remarks>
         /// Accessed by multiple threads - needs appropriate locking
@@ -157,6 +180,11 @@ namespace CWServiceBus.Unicast {
             return toSend;
         }
 
+        private void Transport_TransportMessageReceived(object sender, TransportMessageReceivedEventArgs e) {
+            _messageBeingHandled = e.Message;
+            this.messageDispatcher.DispatchMessages(e.Message.Body, CurrentMessageContext);
+        }
+
         public void HandleCurrentMessageLater() {
             throw new NotImplementedException();
         }
@@ -173,8 +201,11 @@ namespace CWServiceBus.Unicast {
             get { throw new NotImplementedException(); }
         }
 
+
+        [ThreadStatic]
+        static TransportMessage _messageBeingHandled;
         public IMessageContext CurrentMessageContext {
-            get { throw new NotImplementedException(); }
+            get { return _messageBeingHandled != null ? new MessageContext(_messageBeingHandled) : null; }
         }
 
         public T CreateInstance<T>() {
@@ -232,6 +263,10 @@ namespace CWServiceBus.Unicast {
             }
 
             return destination;
+        }
+
+        public void Start() {
+            transport.Start();
         }
     }
 }

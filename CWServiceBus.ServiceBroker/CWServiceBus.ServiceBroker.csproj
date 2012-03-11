@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigurationExtensions.cs" />
+    <Compile Include="Config\ServiceBrokerTransportBuilder.cs" />
     <Compile Include="ISqlServerTransactionWrapper.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

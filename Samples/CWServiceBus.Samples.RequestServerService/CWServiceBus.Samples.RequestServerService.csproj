@@ -35,6 +35,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <HintPath>..\..\external-bin\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="StructureMap">
+      <HintPath>..\..\external-bin\StructureMap.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -60,10 +66,17 @@
       <Project>{A476F8AF-5141-475F-8FFD-9876AA74B492}</Project>
       <Name>CWServiceBus.ServiceBroker</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\CWServiceBus.StructureMap\CWServiceBus.StructureMap.csproj">
+      <Project>{0596F84B-5850-4139-8A44-1EDF87598361}</Project>
+      <Name>CWServiceBus.StructureMap</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CWServiceBus.Samples.Messages\CWServiceBus.Samples.Messages.csproj">
       <Project>{4CF9224A-433C-4880-8486-BC9F10DC4B67}</Project>
       <Name>CWServiceBus.Samples.Messages</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

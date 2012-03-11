@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CWServiceBus {
     public class MessageTypeConventions {
@@ -28,6 +29,12 @@ namespace CWServiceBus {
 
         public bool IsMessageType(Type type) {
             return type != typeof(IMessage) && isMessageType.Any(x => x(type));
+        }
+
+        public IEnumerable<Type> ScanAssembliesForMessageTypes(IEnumerable<Assembly> assemblies) {
+            return assemblies
+                .SelectMany(a => a.GetTypes()
+                                  .Where(t => IsMessageType(t))).ToList();
         }
     }
 }

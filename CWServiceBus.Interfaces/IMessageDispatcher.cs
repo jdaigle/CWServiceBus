@@ -3,8 +3,7 @@ using System.Collections.Generic;
 
 namespace CWServiceBus {
     public interface IMessageDispatcher {
-        /// <returns>True if messages dispatched without error, False othewise</returns>
-        bool DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext, out Exception exception);
+        void DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext);
         /// <summary>
         /// Fired before the the message is dispatched to message handlers
         /// </summary>
