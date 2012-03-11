@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{A476F8AF-5141-475F-8FFD-9876AA74B492}</ProjectGuid>
+    <ProjectGuid>{4CF9224A-433C-4880-8486-BC9F10DC4B67}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CWServiceBus.ServiceBroker</RootNamespace>
-    <AssemblyName>CWServiceBus.ServiceBroker</AssemblyName>
+    <RootNamespace>CWServiceBus.Samples.Messages</RootNamespace>
+    <AssemblyName>CWServiceBus.Samples.Messages</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
-      <HintPath>..\external-bin\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,24 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ISqlServerTransactionWrapper.cs" />
-    <Compile Include="Message.cs" />
+    <Compile Include="MyResponse.cs" />
+    <Compile Include="MyRequest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SqlServerTransactionWrapper.cs" />
-    <Compile Include="ServiceBrokerWrapper.cs" />
-    <Compile Include="Transport\ServiceBrokerTransport.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CWServiceBus.Core\CWServiceBus.Core.csproj">
-      <Project>{EE848BE5-1F66-4F6C-9DB6-6DE1E36B0EDB}</Project>
-      <Name>CWServiceBus.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
-      <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
-      <Name>CWServiceBus.Interfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -11,7 +11,7 @@ namespace CWServiceBus.Unicast {
         private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastServiceBus).Namespace);
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
-        private ISendMessages messageSender;
+        private ITransport transport;
 
         /// <remarks>
         /// Accessed by multiple threads - needs appropriate locking
@@ -145,20 +145,7 @@ namespace CWServiceBus.Unicast {
             var toSend = new TransportMessage { CorrelationId = correlationId.HasValue ? correlationId.ToString() : null, MessageIntent = messageIntent };
             MapTransportMessageFor(messages, toSend);
 
-            foreach (var destination in destinations) {
-                messageSender.Send(toSend, destination);
-
-                if (Logger.IsDebugEnabled)
-                    Logger.Debug(string.Format("Sending message {0} with ID {1} to destination {2}.\n" +
-                                               "ToString() of the message yields: {3}\n" +
-                                               "Message headers:\n{4}",
-                                               messages[0].GetType().AssemblyQualifiedName,
-                                               toSend.Id,
-                                               destination,
-                                               messages[0],
-                                               string.Join(", ", toSend.Headers.Select(h => h.Key + ":" + h.Value).ToArray())
-                        ));
-            }
+            transport.Send(toSend, destinations);
         }
 
         private TransportMessage MapTransportMessageFor(object[] messages, TransportMessage toSend) {

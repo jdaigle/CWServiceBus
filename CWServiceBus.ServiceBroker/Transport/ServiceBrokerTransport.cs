@@ -1,23 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using CWServiceBus.Faults;
+using CWServiceBus.Transport;
 using log4net;
 
-namespace CWServiceBus.Transport {
-    public class TransactionalTransport : ITransport {
+namespace CWServiceBus.ServiceBroker.Transport {
+    public class ServiceBrokerTransport : ITransport {
+
+        public const string NServiceBusTransportMessageContract = "NServiceBusTransportMessageContract";
+        public const string NServiceBusTransportMessage = "NServiceBusTransportMessage";
+
         private int maxRetries = 5;
         private int numberOfWorkerThreads = 1;
+
+        private static readonly int waitTimeout = 21600 * 1000; // wait 6 hours
+        public string ListenerQueue { get; set; }
+        public string ReturnAddress { get; set; }
 
         public int MaxRetries {
             get { return maxRetries; }
             set { maxRetries = value; }
         }
 
-        public IReceiveMessages MessageReceiver { get; set; }
         public IManageMessageFailures FailureManager { get; set; }
-        public ITransactionWrapper TransactionWrapper { get; set; }
+        public ISqlServerTransactionWrapper TransactionWrapper { get; set; }
+        public ITransportMessageSerializer TransportMessageSerializer { get; set; }
 
         public event EventHandler<StartedMessageProcessingEventArgs> StartedMessageProcessing;
         public event EventHandler FinishedMessageProcessing;
@@ -56,13 +67,9 @@ namespace CWServiceBus.Transport {
         }
 
         void ITransport.Start() {
-            MessageReceiver.Init();
-
             for (int i = 0; i < numberOfWorkerThreads; i++)
                 AddWorkerThread().Start();
         }
-
-        #region helper methods
 
         private WorkerThread AddWorkerThread() {
             lock (workerThreads) {
@@ -85,13 +92,14 @@ namespace CWServiceBus.Transport {
 
             try {
                 transactionWaitPool.WaitOne();
-                TransactionWrapper.RunInTransaction(transactionToken => {
-                    ReceiveMessage(transactionToken);
+                TransactionWrapper.RunInTransaction(transaction => {
+                    ReceiveMessage(transaction);
                 });
                 ClearFailuresForMessage(messageId);
             } catch (AbortHandlingCurrentMessageException) {
                 //in case AbortHandlingCurrentMessage was called
-                return; //don't increment failures, we want this message kept around.
+                //don't increment failures, we want this message kept around.
+                return;
             } catch (Exception e) {
                 var originalException = e;
 
@@ -108,20 +116,77 @@ namespace CWServiceBus.Transport {
             }
         }
 
-        public void ReceiveMessage(ITransactionToken transactionToken) {
-            var m = Receive(transactionToken);
-            if (m == null)
+        public void ReceiveMessage(SqlTransaction transaction) {
+            Message message = null;
+            try {
+                message = ServiceBrokerWrapper.WaitAndReceive(transaction, this.ListenerQueue, waitTimeout); // Wait 6 hours
+            } catch (Exception e) {
+                Logger.Error("Error in receiving message from queue.", e);
+                throw; // Throw to rollback 
+            } finally {
+                transactionWaitPool.Release(1);
+                releasedWaitLock = true;
+            }
+
+            // No message? That's okay
+            if (message == null)
                 return;
-            ProcessMessage(m);
+
+            Guid conversationHandle = message.ConversationHandle;
+            try {
+                // Only handle transport messages
+                if (message.MessageTypeName == NServiceBusTransportMessage) {
+
+                    TransportMessage transportMessage = null;
+                    try {
+                        transportMessage = TransportMessageSerializer.Deserialize(message.BodyStream);
+                    } catch (Exception ex) {
+                        Logger.Error("Could not extract message data.", ex);
+                        OnSerializationFailed(conversationHandle, message, ex);
+                        return; // deserialization failed - no reason to try again, so don't throw
+                    }
+
+                    // Set the message Id
+                    if (string.IsNullOrEmpty(transportMessage.Id))
+                        transportMessage.Id = conversationHandle.ToString();
+
+                    // Set the correlation Id
+                    if (string.IsNullOrEmpty(transportMessage.IdForCorrelation))
+                        transportMessage.IdForCorrelation = transportMessage.Id;
+
+                    ProcessMessage(message, transportMessage);
+                }
+            } finally {
+                // End the conversation
+                ServiceBrokerWrapper.EndConversation(transaction, conversationHandle);
+            }
         }
 
-        void ProcessMessage(TransportMessage m) {
-            messageId = m.Id;
+        private void OnSerializationFailed(Guid conversationHandle, Message message, Exception exception) {
+            try {
+                FailureManager.SerializationFailedForMessage(message, null, exception);
+            } catch (Exception e) {
+                Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, message);
+                // TODO critical error will stop the transport from handling new messages
+                //Configure.Instance.OnCriticalError();
+            }
+        }
 
-            var exceptionFromStartedMessageHandling = OnStartedMessageProcessing(m);
+        private void ProcessMessage(Message underlyingTransportObject, TransportMessage transportMessage) {
+            messageId = transportMessage.Id;
 
-            if (HandledMaxRetries(m)) {
-                Logger.Error(string.Format("Message has failed the maximum number of times allowed, ID={0}.", m.Id));
+            var exceptionFromStartedMessageHandling = OnStartedMessageProcessing(transportMessage);
+
+            Exception lastException = null;
+            if (HandledMaxRetries(transportMessage, out lastException)) {
+                try {
+                    FailureManager.ProcessingAlwaysFailsForMessage(underlyingTransportObject, transportMessage, lastException);
+                } catch (Exception e) {
+                    Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, transportMessage);
+                    // TODO critical error will stop the transport from handling new messages
+                    //Configure.Instance.OnCriticalError();
+                }
+                Logger.Error(string.Format("Message has failed the maximum number of times allowed, ID={0}.", transportMessage.Id));
                 OnFinishedMessageProcessing();
                 return;
             }
@@ -130,7 +195,7 @@ namespace CWServiceBus.Transport {
                 throw exceptionFromStartedMessageHandling; //cause rollback 
 
             //care about failures here
-            var exceptionFromMessageHandling = OnTransportMessageReceived(m);
+            var exceptionFromMessageHandling = OnTransportMessageReceived(transportMessage);
 
             //and here
             var exceptionFromMessageModules = OnFinishedMessageProcessing();
@@ -147,7 +212,7 @@ namespace CWServiceBus.Transport {
                 throw exceptionFromMessageModules;
         }
 
-        private bool HandledMaxRetries(TransportMessage message) {
+        private bool HandledMaxRetries(TransportMessage message, out Exception lastException) {
             string messageId = message.Id;
             failuresPerMessageLocker.EnterReadLock();
 
@@ -156,8 +221,7 @@ namespace CWServiceBus.Transport {
                 failuresPerMessageLocker.ExitReadLock();
                 failuresPerMessageLocker.EnterWriteLock();
 
-                var ex = exceptionsForMessages[messageId];
-                InvokeFaultManager(message, ex);
+                lastException = exceptionsForMessages[messageId];
                 failuresPerMessage.Remove(messageId);
                 exceptionsForMessages.Remove(messageId);
 
@@ -166,18 +230,9 @@ namespace CWServiceBus.Transport {
                 return true;
             }
 
+            lastException = null;
             failuresPerMessageLocker.ExitReadLock();
             return false;
-        }
-
-        void InvokeFaultManager(TransportMessage message, Exception exception) {
-            try {
-                FailureManager.ProcessingAlwaysFailsForMessage(message, exception);
-            } catch (Exception ex) {
-                Logger.FatalFormat("Fault manager failed to process the failed message {0}", ex, message);
-                // TODO what's going on here/
-                //Configure.Instance.OnCriticalError();
-            }
         }
 
         private void ClearFailuresForMessage(string messageId) {
@@ -208,24 +263,6 @@ namespace CWServiceBus.Transport {
             finally {
                 failuresPerMessageLocker.ExitWriteLock();
             }
-        }
-
-        [DebuggerNonUserCode] // so that exceptions don't interfere with debugging.
-        private TransportMessage Receive(ITransactionToken transactionToken) {
-            try {
-                return MessageReceiver.Receive(transactionToken);
-            } catch (InvalidOperationException) {
-                //TODO what's going on here?
-                //Configure.Instance.OnCriticalError();
-                return null;
-            } catch (Exception e) {
-                Logger.Error("Error in receiving messages.", e);
-                return null;
-            } finally {
-                transactionWaitPool.Release(1);
-                releasedWaitLock = true;
-            }
-
         }
 
         /// <summary>
@@ -285,8 +322,6 @@ namespace CWServiceBus.Transport {
             return true;
         }
 
-        #endregion
-
         private readonly IList<WorkerThread> workerThreads = new List<WorkerThread>();
 
         /// <summary>
@@ -306,6 +341,31 @@ namespace CWServiceBus.Transport {
         private readonly Semaphore transactionWaitPool = new Semaphore(1, 1);
 
 
-        private static readonly ILog Logger = LogManager.GetLogger(typeof(TransactionalTransport).Namespace);
+        private static readonly ILog Logger = LogManager.GetLogger(typeof(ServiceBrokerTransport).Namespace);
+
+
+        public void Send(TransportMessage toSend, IEnumerable<string> destinations) {
+            TransactionWrapper.RunInTransaction(transaction => {
+                toSend.TimeSent = DateTime.UtcNow;
+                var serializedMessage = string.Empty;
+                using (var stream = new MemoryStream()) {
+                    TransportMessageSerializer.Serialize(toSend, stream);
+                    foreach (var destination in destinations) {
+                        var conversationHandle = ServiceBrokerWrapper.SendOne(transaction, ReturnAddress, destination, NServiceBusTransportMessageContract, NServiceBusTransportMessage, stream.ToArray());
+                        toSend.Id = conversationHandle.ToString();
+                        if (Logger.IsDebugEnabled)
+                            Logger.Debug(string.Format("Sending message {0} with ID {1} to destination {2}.\n" +
+                                               "ToString() of the message yields: {3}\n" +
+                                               "Message headers:\n{4}",
+                                               toSend.Body[0].GetType().AssemblyQualifiedName,
+                                               toSend.Id,
+                                               destination,
+                                               toSend.Body[0],
+                                               string.Join(", ", toSend.Headers.Select(h => h.Key + ":" + h.Value).ToArray())
+                        ));
+                    }
+                }
+            });
+        }
     }
 }
