@@ -30,7 +30,7 @@ namespace CWServiceBus
         void Send<T>(Action<T> messageConstructor);
         void Send(string destinationService, params object[] messages);
         void Send<T>(string destinationService, Action<T> messageConstructor);
-        void Send(string destinationService, string correlationId, params object[] messages);
+        void Send(string destinationService, Guid correlationId, params object[] messages);
         void Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor);
 
 		/// <summary>

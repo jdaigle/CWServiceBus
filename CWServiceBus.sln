@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Core", "CWServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.UnitTests", "CWServiceBus.UnitTests\CWServiceBus.UnitTests.csproj", "{409A8ACC-7E5E-49BE-9B36-3E3D73A26177}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.ServiceBroker", "CWServiceBus.ServiceBroker\CWServiceBus.ServiceBroker.csproj", "{A476F8AF-5141-475F-8FFD-9876AA74B492}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{409A8ACC-7E5E-49BE-9B36-3E3D73A26177}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{409A8ACC-7E5E-49BE-9B36-3E3D73A26177}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{409A8ACC-7E5E-49BE-9B36-3E3D73A26177}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A476F8AF-5141-475F-8FFD-9876AA74B492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A476F8AF-5141-475F-8FFD-9876AA74B492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A476F8AF-5141-475F-8FFD-9876AA74B492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A476F8AF-5141-475F-8FFD-9876AA74B492}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
