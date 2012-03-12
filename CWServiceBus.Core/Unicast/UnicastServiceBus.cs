@@ -8,7 +8,7 @@ using log4net;
 namespace CWServiceBus.Unicast {
     public class UnicastServiceBus : IServiceBus, IStartableServiceBus {
 
-        private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastServiceBus).Namespace);
+        private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastServiceBus));
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
         private ITransport transport;
@@ -252,6 +252,20 @@ namespace CWServiceBus.Unicast {
             return types;
         }
 
+        public void MapMessageTypesToAddress(IDictionary<Type, string> mapping) {
+            foreach (var item in mapping) {
+                MapMessageTypeToAddress(item.Key, item.Value);
+            }
+        }
+
+        public void MapMessageTypeToAddress(Type messageType, string address) {
+            messageTypeToDestinationLocker.EnterWriteLock();
+            messageTypeToDestinationLookup[messageType] = address;
+            messageTypeToDestinationLocker.ExitWriteLock();
+            Logger.Debug("Message " + messageType.FullName + " has been allocated to endpoint " + address + ".");
+            return;
+        }
+
         private string GetDestinationServiceForMessages(object[] messages) {
             if (!messages.Any()) return null;
             return GetDestinationServiceForMessage(messages.First().GetType());
@@ -264,12 +278,8 @@ namespace CWServiceBus.Unicast {
             var destinationFound = messageTypeToDestinationLookup.TryGetValue(messageType, out destination);
             messageTypeToDestinationLocker.ExitReadLock();
 
-            if (!destinationFound)
-                return null;
-
-            //if (destination != Address.Undefined)
-            //    return destination;
-
+            if (destinationFound)
+                return destination;
 
             if (messageMapper != null && !messageType.IsInterface) {
                 var t = messageMapper.GetMappedTypeFor(messageType);

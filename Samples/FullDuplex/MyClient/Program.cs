@@ -1,13 +1,12 @@
-﻿using System.Reflection;
-using System.Threading;
+﻿using System;
+using System.Diagnostics;
+using System.Reflection;
 using CWServiceBus;
 using CWServiceBus.ServiceBroker;
 using CWServiceBus.StructureMap;
-using StructureMap;
-using System;
-using System.Diagnostics;
-using MyMessages;
 using CWServiceBus.Unicast;
+using MyMessages;
+using StructureMap;
 
 namespace MyClient {
     public class Program {
@@ -25,6 +24,10 @@ namespace MyClient {
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
                 builder.AddAssembliesToScan(Assembly.Load("MyClient"));
+                builder.MessageEndpointMappingCollection.Add(new CWServiceBus.Config.MessageEndpointMapping() {
+                    Messages = "MyMessages",
+                    Endpoint = "[//CWServiceBus/Samples/FullDuplex/Server]",
+                });
                 builder.UseServiceBrokerTransport(t => {
                     t.ListenerQueue = "CWServiceBus_Samples_FullDuplex_Client";
                     t.ReturnAddress = "[//CWServiceBus/Samples/FullDuplex/Client]";
@@ -52,19 +55,10 @@ namespace MyClient {
 
                 var watch = new Stopwatch();
                 watch.Start();
-                serviceBus.Send<RequestDataMessage>("[//CWServiceBus/Samples/FullDuplex/Server]", m => {
+                serviceBus.Send<RequestDataMessage>(m => {
                     m.DataId = g;
                     m.String = "<node>it's my \"node\" & i like it<node>";
-                })
-                    //.Register<int>(i => {
-                    //        Console.WriteLine("==========================================================================");
-                    //        Console.WriteLine(
-                    //            "Response with header 'Test' = {0}, 1 = {1}, 2 = {2}.",
-                    //            serviceBus.CurrentMessageContext.Headers["Test"],
-                    //            serviceBus.CurrentMessageContext.Headers["1"],
-                    //            serviceBus.CurrentMessageContext.Headers["2"]);
-                    //    });
-                    ;
+                });
 
                 watch.Stop();
 

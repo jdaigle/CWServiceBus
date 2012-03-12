@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using CWServiceBus.Config;
 using CWServiceBus.Dispatch;
 using CWServiceBus.Reflection;
 using CWServiceBus.Serializers.XML;
 using CWServiceBus.Unicast;
+using log4net;
 
 namespace CWServiceBus {
     public class ServiceBusBuilder {
+
+        private static ILog Logger = log4net.LogManager.GetLogger(typeof(ServiceBusBuilder));
+
         public static IStartableServiceBus Initialize(Action<ServiceBusBuilder> intialize) {
             var builder = new ServiceBusBuilder();
             intialize(builder);
@@ -19,6 +22,7 @@ namespace CWServiceBus {
         public ServiceBusBuilder() {
             this.MessageTypeConventions = new MessageTypeConventions();
             messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
+            this.MessageEndpointMappingCollection = new MessageEndpointMappingCollection();
         }
 
         private IStartableServiceBus Build() {
@@ -33,10 +37,33 @@ namespace CWServiceBus {
             MessageSerializer = new XmlMessageSerializer(messageMapper);
             (MessageSerializer as XmlMessageSerializer).Initialize(messageTypes);
 
+            // Get endpoint mapping
+            foreach (MessageEndpointMapping mapping in this.MessageEndpointMappingCollection) {
+                try {
+                    var messageType = Type.GetType(mapping.Messages, false);
+                    if (messageType != null) {
+                        typesToEndpoints[messageType] = mapping.Endpoint.Trim();
+                        continue;
+                    }
+                } catch (Exception ex) {
+                    Logger.Error("Problem loading message type: " + mapping.Messages, ex);
+                }
+
+                try {
+                    var a = Assembly.Load(mapping.Messages);
+                    foreach (var t in a.GetTypes())
+                        typesToEndpoints[t] = mapping.Endpoint.Trim();
+                } catch (Exception ex) {
+                    throw new ArgumentException("Problem loading message assembly: " + mapping.Messages, ex);
+                }
+
+            }
+
             var transport = TransportBuilder.Build();
 
             var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
             var serviceBus = new UnicastServiceBus(messageMapper, transport, messageDispatcher, null);
+            serviceBus.MapMessageTypesToAddress(typesToEndpoints);
             return serviceBus;
         }
 
@@ -57,6 +84,8 @@ namespace CWServiceBus {
         }
 
         private MessageHandlerCollection messageHandlers;
+        private readonly IDictionary<Type, string> typesToEndpoints = new Dictionary<Type, string>();
+        public MessageEndpointMappingCollection MessageEndpointMappingCollection { get; private set; }
         public IServiceLocator ServiceLocator { get; set; }
         public MessageTypeConventions MessageTypeConventions { get; private set; }
         public IMessageSerializer MessageSerializer { get; private set; }

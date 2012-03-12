@@ -35,6 +35,7 @@
       <HintPath>..\external-bin\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -50,6 +51,8 @@
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
     <Compile Include="Faults\IManageMessageFailures.cs" />
     <Compile Include="IMessageMapper.cs" />
+    <Compile Include="Config\MessageEndpointMapping.cs" />
+    <Compile Include="Config\MessageEndpointMappingCollection.cs" />
     <Compile Include="MessageTypeConventions.cs" />
     <Compile Include="Reflection\DelegateFactory.cs" />
     <Compile Include="Reflection\ExtensionMethods.cs" />
