@@ -425,9 +425,9 @@ namespace CWServiceBus.ServiceBroker.Transport {
         }
 
         private static string FormatErrorMessage(Exception e) {
-            var message = e.Message + Environment.NewLine + e.StackTrace;
+            var message = "[" + e.GetType().ToString() + ": " + e.Message + "] " + Environment.NewLine + e.StackTrace;
             if (e.InnerException != null)
-                message = message + Environment.NewLine + FormatErrorMessage(e.InnerException);
+                message = message + Environment.NewLine + Environment.NewLine + FormatErrorMessage(e.InnerException);
             return message;
         }
 
@@ -436,7 +436,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
                 this.faultForwardDestinations.Add(item);
             }
         }
-       
+
         private void SendFailureMessage(TransportMessage message, Exception e, string reason) {
             if (message == null)
                 return;
