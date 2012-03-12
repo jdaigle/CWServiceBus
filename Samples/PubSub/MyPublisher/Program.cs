@@ -8,7 +8,7 @@ using StructureMap;
 
 namespace MyPublisher {
     public class Program {
-        static IServiceBus ServiceBus;
+        static IMessageBus MessageBus;
 
         public static void Main() {
             log4net.Config.XmlConfigurator.Configure();
@@ -16,7 +16,7 @@ namespace MyPublisher {
             var container = new Container(i => {
             });
 
-            var serviceBus = ServiceBusBuilder.Initialize(builder => {
+            var messageBus = MessageBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
@@ -28,8 +28,8 @@ namespace MyPublisher {
                 });
             });
 
-            serviceBus.Start();
-            ServiceBus = serviceBus;
+            messageBus.Start();
+            MessageBus = messageBus;
 
             Run();
         }
@@ -40,13 +40,13 @@ namespace MyPublisher {
 
             bool publishIEvent = true;
             while (Console.ReadLine() != null) {
-                var eventMessage = publishIEvent ? ServiceBus.CreateInstance<IMyEvent>() : new EventMessage();
+                var eventMessage = publishIEvent ? MessageBus.CreateInstance<IMyEvent>() : new EventMessage();
 
                 eventMessage.EventId = Guid.NewGuid();
                 eventMessage.Time = DateTime.Now.Second > 30 ? (DateTime?)DateTime.Now : null;
                 eventMessage.Duration = TimeSpan.FromSeconds(99999D);
 
-                ServiceBus.Publish(eventMessage);
+                MessageBus.Publish(eventMessage);
 
                 Console.WriteLine("Published event with Id {0}.", eventMessage.EventId);
                 Console.WriteLine("==========================================================================");

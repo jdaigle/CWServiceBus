@@ -14,7 +14,7 @@ namespace MyServer {
                 i.ForSingletonOf<IManagesUnitOfWork>().Use<MyOwnUnitOfWork>();
             });
 
-            var serviceBus = ServiceBusBuilder.Initialize(builder => {
+            var messageBus = MessageBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
@@ -27,7 +27,7 @@ namespace MyServer {
                 });
             });
 
-            serviceBus.Start();
+            messageBus.Start();
 
             while (true)
                 Thread.Sleep(5000);

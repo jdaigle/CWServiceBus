@@ -8,7 +8,6 @@ using StructureMap;
 
 namespace Subscriber1 {
     public class Program {
-        static IServiceBus ServiceBus;
 
         public static void Main() {
             log4net.Config.XmlConfigurator.Configure();
@@ -16,7 +15,7 @@ namespace Subscriber1 {
             var container = new Container(i => {
             });
 
-            var serviceBus = ServiceBusBuilder.Initialize(builder => {
+            var messageBus = MessageBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
@@ -33,10 +32,9 @@ namespace Subscriber1 {
                 });
             });
 
-            serviceBus.Start();
-            ServiceBus = serviceBus;
+            messageBus.Start();
 
-            serviceBus.Subscribe<EventMessage>();
+            messageBus.Subscribe<EventMessage>();
 
             while (true)
                 Thread.Sleep(5000);

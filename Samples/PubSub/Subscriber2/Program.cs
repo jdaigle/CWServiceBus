@@ -3,20 +3,18 @@ using System.Threading;
 using CWServiceBus;
 using CWServiceBus.ServiceBroker;
 using CWServiceBus.StructureMap;
-using StructureMap;
 using MyMessages;
+using StructureMap;
 
 namespace Subscriber2 {
     public class Program {
-        static IServiceBus ServiceBus;
-
         public static void Main() {
             log4net.Config.XmlConfigurator.Configure();
 
             var container = new Container(i => {
             });
 
-            var serviceBus = ServiceBusBuilder.Initialize(builder => {
+            var messageBus = MessageBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
@@ -33,10 +31,8 @@ namespace Subscriber2 {
                 });
             });
 
-            serviceBus.Start();
-            ServiceBus = serviceBus;
-
-            serviceBus.Subscribe<IMyEvent>();
+            messageBus.Start();
+            messageBus.Subscribe<IMyEvent>();
 
             while (true)
                 Thread.Sleep(5000);

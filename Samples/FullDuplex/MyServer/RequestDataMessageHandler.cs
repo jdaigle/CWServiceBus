@@ -5,7 +5,7 @@ using MyMessages;
 
 namespace MyServer {
     public class RequestDataMessageHandler : IMessageHandler<RequestDataMessage> {
-        public IServiceBus ServiceBus { get; set; }
+        public IMessageBus MessageBus { get; set; }
 
         public void Handle(RequestDataMessage message) {
             //try to uncomment the line below to see the error handling in action
@@ -17,20 +17,20 @@ namespace MyServer {
             Logger.Info("==========================================================================");
             Logger.InfoFormat("Received request {0}.", message.DataId);
             Logger.InfoFormat("String received: {0}.", message.String);
-            Logger.InfoFormat("Header 'Test' = {0}.", ServiceBus.GetHeader("Test"));
+            Logger.InfoFormat("Header 'Test' = {0}.", MessageBus.GetHeader("Test"));
             Logger.InfoFormat(Thread.CurrentPrincipal != null ? Thread.CurrentPrincipal.Identity.Name : string.Empty);
 
-            var response = ServiceBus.CreateInstance<DataResponseMessage>(m => {
+            var response = MessageBus.CreateInstance<DataResponseMessage>(m => {
                 m.DataId = message.DataId;
                 m.String = message.String;
             });
 
 
-            ServiceBus.CopyHeaderFromRequest();
-            ServiceBus.SetHeader("1", "1");
-            ServiceBus.SetHeader("2", "2");
+            MessageBus.CopyHeaderFromRequest();
+            MessageBus.SetHeader("1", "1");
+            MessageBus.SetHeader("2", "2");
 
-            ServiceBus.Reply(response);
+            MessageBus.Reply(response);
         }
 
         public static ILog Logger = LogManager.GetLogger("MyServer");

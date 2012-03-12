@@ -11,7 +11,7 @@ using StructureMap;
 namespace MyClient {
     public class Program {
 
-        static IServiceBus serviceBus;
+        static IMessageBus messageBus;
 
         public static void Main() {
             log4net.Config.XmlConfigurator.Configure();
@@ -19,7 +19,7 @@ namespace MyClient {
             var container = new Container(i => {
             });
 
-            serviceBus = ServiceBusBuilder.Initialize(builder => {
+            messageBus = MessageBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "MyMessages");
                 builder.AddAssembliesToScan(Assembly.Load("MyMessages"));
@@ -36,7 +36,7 @@ namespace MyClient {
                 });
             });
 
-            ((IStartableServiceBus)serviceBus).Start();
+            ((IStartableMessageBus)messageBus).Start();
 
             Run();
         }
@@ -51,11 +51,11 @@ namespace MyClient {
                 Console.WriteLine("==========================================================================");
                 Console.WriteLine("Requesting to get data by id: {0}", g.ToString("N"));
 
-                serviceBus.SetHeader("Test", "N");
+                messageBus.SetHeader("Test", "N");
 
                 var watch = new Stopwatch();
                 watch.Start();
-                serviceBus.Send<RequestDataMessage>(m => {
+                messageBus.Send<RequestDataMessage>(m => {
                     m.DataId = g;
                     m.String = "<node>it's my \"node\" & i like it<node>";
                 });
