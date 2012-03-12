@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IManagesUnitOfWork.cs" />
     <Compile Include="IMessageDispatcher.cs" />
     <Compile Include="IServiceBus.cs" />
     <Compile Include="IMessage.cs" />

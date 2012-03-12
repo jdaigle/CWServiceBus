@@ -46,7 +46,6 @@
     <Compile Include="Config\ITransportBuilder.cs" />
     <Compile Include="Dispatch\DispatchExtensions.cs" />
     <Compile Include="Dispatch\DispatchInfo.cs" />
-    <Compile Include="Dispatch\IDispatchInspector.cs" />
     <Compile Include="Dispatch\MessageDispatcher.cs" />
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
     <Compile Include="Faults\IManageMessageFailures.cs" />

@@ -11,7 +11,7 @@ namespace CWServiceBus.Dispatch {
         }
 
         private IServiceLocator serviceLocator;
-        private IEnumerable<IDispatchInspector> dispatchInspectors;
+        private IEnumerable<IManagesUnitOfWork> unitOfWorkManagers;
         private MessageHandlerCollection messageHandlers;
         private static readonly ILog Logger = LogManager.GetLogger(typeof(MessageDispatcher).Namespace);
 
@@ -33,16 +33,16 @@ namespace CWServiceBus.Dispatch {
                     OnDispatchException(childServiceLocator, messages, messageContext, e);
                     throw;
                 } finally {
-                    OnDispatched(childServiceLocator, messages, messageContext, exception != null);
+                    OnDispatched(childServiceLocator, messages, messageContext, exception);
                 }
             }
         }
 
         private void OnDispatching(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext) {
-            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
-            if (dispatchInspectors != null)
-                foreach (var dispatchInspector in dispatchInspectors)
-                    dispatchInspector.OnDispatching(childServiceLocator, messageContext);
+            if (unitOfWorkManagers == null) unitOfWorkManagers = serviceLocator.GetAll<IManagesUnitOfWork>();
+            if (unitOfWorkManagers != null)
+                foreach (var unitOfWorkManager in unitOfWorkManagers)
+                    unitOfWorkManager.Begin(childServiceLocator, messageContext);
             if (Dispatching != null) {
                 Dispatching(this, new MessageDispatcherEventArgs() {
                     Messages = messages,
@@ -50,24 +50,20 @@ namespace CWServiceBus.Dispatch {
             }
         }
 
-        private void OnDispatched(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, bool withError) {
-            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
-            if (dispatchInspectors != null)
-                foreach (var dispatchInspector in dispatchInspectors)
-                    dispatchInspector.OnDispatched(childServiceLocator, messageContext, withError);
+        private void OnDispatched(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, Exception e) {
+            if (unitOfWorkManagers == null) unitOfWorkManagers = serviceLocator.GetAll<IManagesUnitOfWork>();
+            if (unitOfWorkManagers != null)
+                foreach (var unitOfWorkManager in unitOfWorkManagers)
+                    unitOfWorkManager.End(childServiceLocator, messageContext, e);
             if (Dispatched != null) {
                 Dispatched(this, new MessageDispatcherEventArgs() {
                     Messages = messages,
-                    DispatchedWithError = withError
+                    DispatchedWithError = e != null,
                 });
             }
         }
 
         private void OnDispatchException(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, Exception e) {
-            if (dispatchInspectors == null) dispatchInspectors = serviceLocator.GetAll<IDispatchInspector>();
-            if (dispatchInspectors != null)
-                foreach (var dispatchInspector in dispatchInspectors)
-                    dispatchInspector.OnDispatchException(childServiceLocator, messageContext, e);
             if (DispatchException != null) {
                 DispatchException(this, new MessageDispatcherEventArgs() {
                     Messages = messages,
