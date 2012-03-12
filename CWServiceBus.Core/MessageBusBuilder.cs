@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using CWServiceBus.Config;
@@ -21,22 +22,23 @@ namespace CWServiceBus {
 
         public MessageBusBuilder() {
             this.MessageTypeConventions = new MessageTypeConventions();
-            messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
             this.MessageEndpointMappingCollection = new MessageEndpointMappingCollection();
             AddAssemblyToScan(Assembly.Load("CWServiceBus.Core"));
         }
 
         private IStartableMessageBus Build() {
-            messageHandlers.AddAssembliesToScan(assembliesToScan);
-            messageHandlers.Init();
-
             var messageTypes = MessageTypeConventions.ScanAssembliesForMessageTypes(assembliesToScan);
             var messageMapper = new MessageMapper();
             messageMapper.SetMessageTypeConventions(this.MessageTypeConventions);
             messageMapper.Initialize(messageTypes);
+            var allMessageTypes = messageTypes.Concat(messageMapper.DynamicTypes);
 
             MessageSerializer = new XmlMessageSerializer(messageMapper);
             (MessageSerializer as XmlMessageSerializer).Initialize(messageTypes);
+
+            var messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
+            messageHandlers.AddAssembliesToScan(assembliesToScan);
+            messageHandlers.Init();
 
             // Get endpoint mapping
             foreach (MessageEndpointMapping mapping in this.MessageEndpointMappingCollection) {
@@ -84,7 +86,6 @@ namespace CWServiceBus {
             AddAssembliesToScan(new[] { assembly });
         }
 
-        private MessageHandlerCollection messageHandlers;
         private readonly IDictionary<Type, string> typesToEndpoints = new Dictionary<Type, string>();
         public MessageEndpointMappingCollection MessageEndpointMappingCollection { get; private set; }
         public IServiceLocator ServiceLocator { get; set; }

@@ -14,13 +14,11 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using log4net;
 
-namespace CWServiceBus.Reflection
-{
+namespace CWServiceBus.Reflection {
     /// <summary>
     /// Uses reflection to map between interfaces and their generated concrete implementations.
     /// </summary>
-    public class MessageMapper : IMessageMapper
-    {
+    public class MessageMapper : IMessageMapper {
         public void SetMessageTypeConventions(MessageTypeConventions messageTypeCoventions) {
             this.messageTypeCoventions = messageTypeCoventions;
         }
@@ -29,8 +27,7 @@ namespace CWServiceBus.Reflection
         /// Scans the given types generating concrete classes for interfaces.
         /// </summary>
         /// <param name="types"></param>
-        public void Initialize(IEnumerable<Type> types)
-        {
+        public void Initialize(IEnumerable<Type> types) {
             if (types == null || types.Count() == 0)
                 return;
 
@@ -52,20 +49,17 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="t"></param>
         /// <param name="moduleBuilder"></param>
-        public void InitType(Type t, ModuleBuilder moduleBuilder)
-        {
+        public void InitType(Type t, ModuleBuilder moduleBuilder) {
             if (t == null)
                 return;
 
             if (t.IsSimpleType())
                 return;
 
-            if (typeof(IEnumerable).IsAssignableFrom(t))
-            {
+            if (typeof(IEnumerable).IsAssignableFrom(t)) {
                 InitType(t.GetElementType(), moduleBuilder);
 
-                foreach (var interfaceType in t.GetInterfaces())
-                {
+                foreach (var interfaceType in t.GetInterfaces()) {
                     foreach (var g in interfaceType.GetGenericArguments())
                         InitType(g, moduleBuilder);
 
@@ -83,8 +77,7 @@ namespace CWServiceBus.Reflection
 
             if (t.IsInterface) {
                 GenerateImplementationFor(t, moduleBuilder);
-            }
-            else
+            } else
                 typeToConstructor[t] = t.GetConstructor(Type.EmptyTypes);
 
             nameToType[typeName] = t;
@@ -96,8 +89,7 @@ namespace CWServiceBus.Reflection
                 InitType(prop.PropertyType, moduleBuilder);
         }
 
-        private static string GetTypeName(Type t)
-        {
+        private static string GetTypeName(Type t) {
             var args = t.GetGenericArguments();
             if (args.Length == 2)
                 if (typeof(KeyValuePair<,>).MakeGenericType(args) == t)
@@ -124,8 +116,7 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
-        public string GetNewTypeName(Type t)
-        {
+        public string GetNewTypeName(Type t) {
             return t.FullName + SUFFIX;
         }
 
@@ -136,8 +127,7 @@ namespace CWServiceBus.Reflection
         /// <param name="t"></param>
         /// <param name="moduleBuilder"></param>
         /// <returns></returns>
-        public Type CreateTypeFrom(Type t, ModuleBuilder moduleBuilder)
-        {
+        public Type CreateTypeFrom(Type t, ModuleBuilder moduleBuilder) {
             TypeBuilder typeBuilder = moduleBuilder.DefineType(
                 GetNewTypeName(t),
                 TypeAttributes.Serializable | TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed,
@@ -146,8 +136,7 @@ namespace CWServiceBus.Reflection
 
             typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);
 
-            foreach (PropertyInfo prop in GetAllProperties(t))
-            {
+            foreach (PropertyInfo prop in GetAllProperties(t)) {
                 Type propertyType = prop.PropertyType;
 
                 FieldBuilder fieldBuilder = typeBuilder.DefineField(
@@ -208,8 +197,7 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
-        private static IEnumerable<PropertyInfo> GetAllProperties(Type t)
-        {
+        private static IEnumerable<PropertyInfo> GetAllProperties(Type t) {
             var properties = new List<PropertyInfo>(t.GetProperties());
             foreach (Type interfaceType in t.GetInterfaces())
                 properties.AddRange(GetAllProperties(interfaceType));
@@ -234,10 +222,8 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
-        public Type GetMappedTypeFor(Type t)
-        {
-            if (t.IsClass)
-            {
+        public Type GetMappedTypeFor(Type t) {
+            if (t.IsClass) {
                 Type result;
                 concreteToInterfaceTypeMapping.TryGetValue(t, out result);
                 if (result != null)
@@ -257,8 +243,7 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        public Type GetMappedTypeFor(string typeName)
-        {
+        public Type GetMappedTypeFor(string typeName) {
             if (nameToType.ContainsKey(typeName))
                 return nameToType[typeName];
 
@@ -272,8 +257,7 @@ namespace CWServiceBus.Reflection
         /// <typeparam name="T"></typeparam>
         /// <param name="action"></param>
         /// <returns></returns>
-        public T CreateInstance<T>(Action<T> action)
-        {
+        public T CreateInstance<T>(Action<T> action) {
             T result = CreateInstance<T>();
             if (action != null)
                 action(result);
@@ -287,8 +271,7 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T CreateInstance<T>()
-        {
+        public T CreateInstance<T>() {
             return (T)CreateInstance(typeof(T));
         }
 
@@ -298,11 +281,9 @@ namespace CWServiceBus.Reflection
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
-        public object CreateInstance(Type t)
-        {
+        public object CreateInstance(Type t) {
             Type mapped = t;
-            if (t.IsInterface || t.IsAbstract)
-            {
+            if (t.IsInterface || t.IsAbstract) {
                 mapped = GetMappedTypeFor(t);
                 if (mapped == null)
                     throw new ArgumentException("Could not find a concrete type mapped to " + t.FullName);
@@ -322,11 +303,15 @@ namespace CWServiceBus.Reflection
             return messageTypeCoventions.IsMessageType(type);
         }
 
+        public IEnumerable<Type> DynamicTypes {
+            get { return concreteToInterfaceTypeMapping.Keys; }
+        }
+
         private static readonly string SUFFIX = "__Impl";
-        private static readonly Dictionary<Type, Type> interfaceToConcreteTypeMapping = new Dictionary<Type, Type>();
-        private static readonly Dictionary<Type, Type> concreteToInterfaceTypeMapping = new Dictionary<Type, Type>();
-        private static readonly Dictionary<string, Type> nameToType = new Dictionary<string, Type>();
-        private static readonly Dictionary<Type, ConstructorInfo> typeToConstructor = new Dictionary<Type, ConstructorInfo>();
+        private readonly Dictionary<Type, Type> interfaceToConcreteTypeMapping = new Dictionary<Type, Type>();
+        private readonly Dictionary<Type, Type> concreteToInterfaceTypeMapping = new Dictionary<Type, Type>();
+        private readonly Dictionary<string, Type> nameToType = new Dictionary<string, Type>();
+        private readonly Dictionary<Type, ConstructorInfo> typeToConstructor = new Dictionary<Type, ConstructorInfo>();
         private static ILog Logger = LogManager.GetLogger(typeof(MessageMapper).Namespace);
     }
 }
