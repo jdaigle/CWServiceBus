@@ -308,10 +308,10 @@ namespace CWServiceBus.Reflection {
         }
 
         private static readonly string SUFFIX = "__Impl";
-        private readonly Dictionary<Type, Type> interfaceToConcreteTypeMapping = new Dictionary<Type, Type>();
-        private readonly Dictionary<Type, Type> concreteToInterfaceTypeMapping = new Dictionary<Type, Type>();
-        private readonly Dictionary<string, Type> nameToType = new Dictionary<string, Type>();
-        private readonly Dictionary<Type, ConstructorInfo> typeToConstructor = new Dictionary<Type, ConstructorInfo>();
+        private static readonly Dictionary<Type, Type> interfaceToConcreteTypeMapping = new Dictionary<Type, Type>();
+        private static readonly Dictionary<Type, Type> concreteToInterfaceTypeMapping = new Dictionary<Type, Type>();
+        private static readonly Dictionary<string, Type> nameToType = new Dictionary<string, Type>();
+        private static readonly Dictionary<Type, ConstructorInfo> typeToConstructor = new Dictionary<Type, ConstructorInfo>();
         private static ILog Logger = LogManager.GetLogger(typeof(MessageMapper).Namespace);
     }
 }
