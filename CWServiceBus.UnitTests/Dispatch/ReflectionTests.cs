@@ -13,7 +13,7 @@ namespace CWServiceBus.Dispatch {
         public class SubClassMessage : InterfaceMessage{}
         public class MessageHandler : IMessageHandler<InterfaceMessage> {
             public void Handle(InterfaceMessage message) {
-                throw new NotImplementedException();
+                // NOP
             }
         }
 
