@@ -25,17 +25,17 @@ namespace CWServiceBus {
             messageHandlers.AddAssembliesToScan(assembliesToScan);
             messageHandlers.Init();
 
+            var messageTypes = MessageTypeConventions.ScanAssembliesForMessageTypes(assembliesToScan);
             var messageMapper = new MessageMapper();
             messageMapper.SetMessageTypeConventions(this.MessageTypeConventions);
-            messageMapper.Initialize(MessageTypeConventions.ScanAssembliesForMessageTypes(assembliesToScan));
-
-            var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
+            messageMapper.Initialize(messageTypes);
 
             MessageSerializer = new XmlMessageSerializer(messageMapper);
-            (MessageSerializer as XmlMessageSerializer).Initialize(messageHandlers.AllMessageTypes().Distinct());
+            (MessageSerializer as XmlMessageSerializer).Initialize(messageTypes);
 
             var transport = TransportBuilder.Build();
 
+            var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
             var serviceBus = new UnicastServiceBus(messageMapper, transport, messageDispatcher, null);
             return serviceBus;
         }
