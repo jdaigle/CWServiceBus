@@ -32,12 +32,18 @@ namespace CWServiceBus.StructureMap {
             return this.container.GetAllInstances(type).Cast<object>();
         }
 
-        public void Inject<T>(T instance) {
-            this.container.Inject<T>(instance);
+        public void RegisterComponent<T>(T instance) {
+            this.container.Configure(i => {
+                i.For<T>().Use(instance);
+                i.FillAllPropertiesOfType<T>();
+            });
         }
 
-        public void Inject(Type type, object instance) {
-            this.container.Inject(type, instance);
+        public void RegisterComponent(Type type, object instance) {
+            this.container.Configure(i => {
+                i.For(type).Use(instance);
+                i.SetAllProperties(y => y.TypeMatches(p => p == type));
+            });
         }
 
         public IServiceLocator GetChildServiceLocator() {

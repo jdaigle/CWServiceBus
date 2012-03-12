@@ -8,8 +8,8 @@ namespace CWServiceBus {
         IEnumerable<T> GetAll<T>();
         object Get(Type type);
         IEnumerable<object> GetAll(Type type);
-        void Inject<T>(T instance);
-        void Inject(Type type, object instance);
+        void RegisterComponent<T>(T instance);
+        void RegisterComponent(Type type, object instance);
         IServiceLocator GetChildServiceLocator();
     }
 }

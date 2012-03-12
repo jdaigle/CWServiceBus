@@ -27,11 +27,6 @@ namespace MyServer {
                 });
             });
 
-            container.Inject<IServiceBus>(serviceBus);
-            container.Configure(i => {
-                i.For<IServiceBus>().Use(serviceBus);
-                i.FillAllPropertiesOfType<IServiceBus>();
-            });
             serviceBus.Start();
 
             while (true)

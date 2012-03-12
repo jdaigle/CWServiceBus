@@ -3,7 +3,12 @@ using System.Collections.Generic;
 
 namespace CWServiceBus {
     public interface IMessageDispatcher {
-        void DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext);
+        /// <summary>
+        /// Instance of the parent ServiceLocator
+        /// </summary>
+        IServiceLocator ServiceLocator { get; }
+
+        void DispatchMessages(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext);
         /// <summary>
         /// Fired before the the message is dispatched to message handlers
         /// </summary>

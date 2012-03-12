@@ -15,26 +15,26 @@ namespace CWServiceBus.Dispatch {
         private MessageHandlerCollection messageHandlers;
         private static readonly ILog Logger = LogManager.GetLogger(typeof(MessageDispatcher).Namespace);
 
-        public void DispatchMessages(IEnumerable<object> messages, IMessageContext messageContext) {
-            using (var childServiceLocator = serviceLocator.GetChildServiceLocator()) {
-                Exception exception = null;
-                try {
-                    OnDispatching(childServiceLocator, messages, messageContext);
-                    foreach (var message in messages) {
-                        var messageType = message.GetType();
-                        foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType)) {
-                            var handler = childServiceLocator.Get(messageHandlerDispatchInfo.InstanceType);
-                            messageHandlerDispatchInfo.Invoke(handler, message);
-                        }
+        public IServiceLocator ServiceLocator { get { return serviceLocator; } }
+
+        public void DispatchMessages(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext) {
+            Exception exception = null;
+            try {
+                OnDispatching(childServiceLocator, messages, messageContext);
+                foreach (var message in messages) {
+                    var messageType = message.GetType();
+                    foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType)) {
+                        var handler = childServiceLocator.Get(messageHandlerDispatchInfo.InstanceType);
+                        messageHandlerDispatchInfo.Invoke(handler, message);
                     }
-                } catch (Exception e) {
-                    Logger.Warn("Failed Dispatching Messages for message with ID=" + messageContext.MessageId, e);
-                    exception = e;
-                    OnDispatchException(childServiceLocator, messages, messageContext, e);
-                    throw;
-                } finally {
-                    OnDispatched(childServiceLocator, messages, messageContext, exception);
                 }
+            } catch (Exception e) {
+                Logger.Warn("Failed Dispatching Messages for message with ID=" + messageContext.MessageId, e);
+                exception = e;
+                OnDispatchException(childServiceLocator, messages, messageContext, e);
+                throw;
+            } finally {
+                OnDispatched(childServiceLocator, messages, messageContext, exception);
             }
         }
 

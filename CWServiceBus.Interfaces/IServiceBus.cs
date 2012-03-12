@@ -33,6 +33,16 @@ namespace CWServiceBus
         void Send(string destinationService, Guid correlationId, params object[] messages);
         void Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor);
 
+        /// <summary>
+        /// Sends all messages to the endpoint which sent the message currently being handled on this thread.
+        /// </summary>
+        /// <param name="messages">The messages to send.</param>
+        void Reply(params object[] messages);
+        /// <summary>
+        /// Sends all messages to the endpoint which sent the message currently being handled on this thread.
+        /// </summary>
+        void Reply<T>(Action<T> messageConstructor);
+
 		/// <summary>
 		/// Moves the message being handled to the back of the list of available 
 		/// messages so it can be handled later.

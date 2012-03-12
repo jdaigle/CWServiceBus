@@ -149,6 +149,16 @@ namespace CWServiceBus.Unicast {
             SendMessage(destinationService, correlationId, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
+        public void Reply(params object[] messages) {
+            if (CurrentMessageContext == null)
+                throw new InvalidOperationException("CurrentMessageContext is null. Cannot reply.");
+            SendMessage(CurrentMessageContext.ReturnAddress, null, MessageIntentEnum.Send, messages);
+        }
+
+        public void Reply<T>(Action<T> messageConstructor) {
+            Reply(CreateInstance<T>(messageConstructor));
+        }
+
         private void SendMessage(string destination, Guid? correlationId, MessageIntentEnum messageIntent, params object[] messages) {
             if (messages == null || messages.Length == 0)
                 throw new InvalidOperationException("Cannot send an empty set of messages.");
@@ -174,15 +184,19 @@ namespace CWServiceBus.Unicast {
         private TransportMessage MapTransportMessageFor(object[] messages, TransportMessage toSend) {
             toSend.Body = messages;
             toSend.WindowsIdentityName = Thread.CurrentPrincipal.Identity.Name;
-            toSend.Headers = new List<HeaderInfo>();
+            toSend.Headers = OutgoingHeaders.Select(x => new HeaderInfo() { Key = x.Key, Value = x.Value }).ToList();
             var timeToBeReceived = TimeSpan.MaxValue;
             toSend.TimeToBeReceived = timeToBeReceived;
             return toSend;
         }
 
         private void Transport_TransportMessageReceived(object sender, TransportMessageReceivedEventArgs e) {
+            this.OutgoingHeaders.Clear();
             _messageBeingHandled = e.Message;
-            this.messageDispatcher.DispatchMessages(e.Message.Body, CurrentMessageContext);
+            using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
+                childServiceLocator.RegisterComponent<IServiceBus>(this);
+                this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
+            }
         }
 
         public void HandleCurrentMessageLater() {
@@ -197,10 +211,11 @@ namespace CWServiceBus.Unicast {
             throw new NotImplementedException();
         }
 
+        [ThreadStatic]
+        public Dictionary<string, string> outgoingHeaders = new Dictionary<string, string>();
         public IDictionary<string, string> OutgoingHeaders {
-            get { throw new NotImplementedException(); }
+            get { return outgoingHeaders; }
         }
-
 
         [ThreadStatic]
         static TransportMessage _messageBeingHandled;

@@ -34,16 +34,16 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CWServiceBus.Core">
+    <Reference Include="CWServiceBus.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\build\CWServiceBus.Core.dll</HintPath>
     </Reference>
-    <Reference Include="CWServiceBus.Interfaces">
+    <Reference Include="CWServiceBus.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\build\CWServiceBus.Interfaces.dll</HintPath>
     </Reference>
-    <Reference Include="CWServiceBus.ServiceBroker">
+    <Reference Include="CWServiceBus.ServiceBroker, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\build\CWServiceBus.ServiceBroker.dll</HintPath>
     </Reference>
-    <Reference Include="CWServiceBus.StructureMap">
+    <Reference Include="CWServiceBus.StructureMap, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\build\CWServiceBus.StructureMap.dll</HintPath>
     </Reference>
     <Reference Include="log4net">

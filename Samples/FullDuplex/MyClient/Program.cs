@@ -48,7 +48,7 @@ namespace MyClient {
                 Console.WriteLine("==========================================================================");
                 Console.WriteLine("Requesting to get data by id: {0}", g.ToString("N"));
 
-                //serviceBus.OutgoingHeaders["Test"] = g.ToString("N");
+                serviceBus.SetHeader("Test", "N");
 
                 var watch = new Stopwatch();
                 watch.Start();
