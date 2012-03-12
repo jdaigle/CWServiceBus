@@ -50,7 +50,6 @@
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageDispatcher.cs" />
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
-    <Compile Include="Faults\IManageMessageFailures.cs" />
     <Compile Include="IMessageMapper.cs" />
     <Compile Include="Config\MessageEndpointMapping.cs" />
     <Compile Include="Config\MessageEndpointMappingCollection.cs" />
@@ -63,6 +62,7 @@
     <Compile Include="Serializers\XML\XmlMessageSerializer.cs" />
     <Compile Include="MessageBusBuilder.cs" />
     <Compile Include="Transport\AbortHandlingCurrentMessageException.cs" />
+    <Compile Include="Transport\TransportMessageFaultEventArgs.cs" />
     <Compile Include="Transport\FailedMessageProcessingEventArgs.cs" />
     <Compile Include="Transport\HeaderInfo.cs" />
     <Compile Include="Transport\ITransport.cs" />
@@ -85,6 +85,9 @@
       <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
       <Name>CWServiceBus.Interfaces</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Faults\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

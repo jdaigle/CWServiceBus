@@ -1,8 +1,8 @@
 ﻿using CWServiceBus.Config;
-using CWServiceBus.Faults;
 using CWServiceBus.Serializers;
 using CWServiceBus.ServiceBroker.Transport;
 using CWServiceBus.Transport;
+using System.Collections.Generic;
 
 namespace CWServiceBus.ServiceBroker.Config {
     public class ServiceBrokerTransportBuilder : ITransportBuilder {
@@ -29,11 +29,16 @@ namespace CWServiceBus.ServiceBroker.Config {
             set { numberOfWorkerThreads = value; }
         }
 
+        private HashSet<string> faultForwardDestinations = new HashSet<string>();
+        public void ForwardFaultsTo(string destination) {
+            faultForwardDestinations.Add(destination);
+        }
+
         public ITransport Build() {
             var transportMessageSerializer = new XmlTransportMessageSerializer(MessageBusBuilder.MessageSerializer);
-            IManageMessageFailures failureManager = null;
-            var transport = new ServiceBrokerTransport(ListenerQueue, ReturnAddress, new SqlServerTransactionWrapper(ServiceBrokerConnectionString), transportMessageSerializer, failureManager, NumberOfWorkerThreads);
+            var transport = new ServiceBrokerTransport(ListenerQueue, ReturnAddress, new SqlServerTransactionWrapper(ServiceBrokerConnectionString), transportMessageSerializer, NumberOfWorkerThreads);
             transport.MaxRetries = this.MaxRetries;
+            transport.ForwardFaultsTo(faultForwardDestinations);
             return transport;
         }
     }

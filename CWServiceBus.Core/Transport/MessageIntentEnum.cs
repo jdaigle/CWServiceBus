@@ -9,24 +9,10 @@
     /// </remarks>
     public enum MessageIntentEnum
     {
-        ///<summary>
-        /// Regular point-to-point send
-        ///</summary>
         Send,
-
-        ///<summary>
-        /// Publish, not a regular point-to-point send
-        ///</summary>
         Publish,
-
-        /// <summary>
-        /// Subscribe
-        /// </summary>
         Subscribe,
-
-        /// <summary>
-        /// Unsubscribe
-        /// </summary>
-        Unsubscribe
+        Unsubscribe,
+        FaultNotification
     }
 }

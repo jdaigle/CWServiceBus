@@ -190,9 +190,12 @@ namespace CWServiceBus.Unicast {
                 if (HandleControlMessage())
                     return;
             }
-            using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
-                childServiceLocator.RegisterComponent<IMessageBus>(this);
-                this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
+            if (e.Message.MessageIntent == MessageIntentEnum.Send ||
+                e.Message.MessageIntent == MessageIntentEnum.Publish) {
+                using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
+                    childServiceLocator.RegisterComponent<IMessageBus>(this);
+                    this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
+                }
             }
         }
 

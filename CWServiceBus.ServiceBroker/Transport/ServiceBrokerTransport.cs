@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using CWServiceBus.Faults;
 using CWServiceBus.Transport;
 using log4net;
 
@@ -26,23 +26,23 @@ namespace CWServiceBus.ServiceBroker.Transport {
             set { maxRetries = value; }
         }
 
-        public IManageMessageFailures FailureManager { get; set; }
         public ISqlServerTransactionWrapper TransactionWrapper { get; set; }
         public ITransportMessageSerializer TransportMessageSerializer { get; set; }
+        private ISet<string> faultForwardDestinations = new HashSet<string>();
 
         public event EventHandler<StartedMessageProcessingEventArgs> StartedMessageProcessing;
         public event EventHandler FinishedMessageProcessing;
         public event EventHandler<FailedMessageProcessingEventArgs> FailedMessageProcessing;
         public event EventHandler<TransportMessageReceivedEventArgs> TransportMessageReceived;
+        public event EventHandler<TransportMessageFaultEventArgs> MessageFault;
 
         public ServiceBrokerTransport() { }
 
-        public ServiceBrokerTransport(string listenerQueue, string returnAddress, SqlServerTransactionWrapper transactionWrapper, ITransportMessageSerializer transportMessageSerializer, IManageMessageFailures failureManager, int initialNumberOfWorkThreads = 1) {
+        public ServiceBrokerTransport(string listenerQueue, string returnAddress, SqlServerTransactionWrapper transactionWrapper, ITransportMessageSerializer transportMessageSerializer, int initialNumberOfWorkThreads = 1) {
             this.ListenerQueue = listenerQueue;
             this.ReturnAddress = returnAddress;
             this.TransactionWrapper = transactionWrapper;
             this.TransportMessageSerializer = transportMessageSerializer;
-            this.FailureManager = failureManager;
             this.numberOfWorkerThreads = initialNumberOfWorkThreads;
         }
 
@@ -180,12 +180,14 @@ namespace CWServiceBus.ServiceBroker.Transport {
             }
         }
 
-        private void OnSerializationFailed(Guid conversationHandle, Message message, Exception exception) {
+        private void OnSerializationFailed(Guid conversationHandle, Message underlyingTransportObject, Exception exception) {
             try {
-                if (FailureManager != null)
-                    FailureManager.SerializationFailedForMessage(message, null, exception);
+                this.WriteFailedMessage(conversationHandle, underlyingTransportObject, null, exception, 3);
+                if (MessageFault != null)
+                    MessageFault(this, new TransportMessageFaultEventArgs(null, exception, "SerializationFailed"));
+                SendFailureMessage(null, exception, "SerializationFailed");
             } catch (Exception e) {
-                Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, message);
+                Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, underlyingTransportObject);
                 // TODO critical error will stop the transport from handling new messages
                 //Configure.Instance.OnCriticalError();
             }
@@ -199,8 +201,10 @@ namespace CWServiceBus.ServiceBroker.Transport {
             Exception lastException = null;
             if (HandledMaxRetries(transportMessage, out lastException)) {
                 try {
-                    if (FailureManager != null)
-                        FailureManager.ProcessingAlwaysFailsForMessage(underlyingTransportObject, transportMessage, lastException);
+                    this.WriteFailedMessage(underlyingTransportObject.ConversationHandle, underlyingTransportObject, transportMessage, lastException, 2);
+                    if (MessageFault != null)
+                        MessageFault(this, new TransportMessageFaultEventArgs(transportMessage, lastException, "ProcessingFailed"));
+                    SendFailureMessage(transportMessage, lastException, "ProcessingFailed");
                 } catch (Exception e) {
                     Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, transportMessage);
                     // TODO critical error will stop the transport from handling new messages
@@ -365,7 +369,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
 
 
         public void Send(TransportMessage toSend, IEnumerable<string> destinations) {
-            TransactionWrapper.RunInTransaction(transaction => {                
+            TransactionWrapper.RunInTransaction(transaction => {
                 toSend.TimeSent = DateTime.UtcNow;
                 toSend.ReturnAddress = this.ReturnAddress;
                 var serializedMessage = string.Empty;
@@ -387,6 +391,86 @@ namespace CWServiceBus.ServiceBroker.Transport {
                     }
                 }
             });
+        }
+
+
+        private void WriteFailedMessage(Guid messageId, Message serviceBrokerMessage, TransportMessage transportMessage, Exception exception, int status) {
+            try {
+                // Write a failed message
+                TransactionWrapper.RunInTransaction(transaction => {
+                    using (var command = transaction.Connection.CreateCommand()) {
+                        command.CommandText = "cw_InsertFailedMessage";
+                        command.CommandType = CommandType.StoredProcedure;
+                        if (transportMessage != null)
+                            command.Parameters.AddWithValue("@originService", transportMessage.ReturnAddress);
+                        else
+                            command.Parameters.AddWithValue("@originService", string.Empty);
+                        command.Parameters.AddWithValue("@queueName", this.ListenerQueue);
+                        command.Parameters.AddWithValue("@queueService", this.ReturnAddress);
+                        command.Parameters.AddWithValue("@messageId", messageId);
+                        command.Parameters.AddWithValue("@messageStatus", (int)status);
+                        command.Parameters.AddWithValue("@messageData", serviceBrokerMessage.Body);
+                        if (exception != null)
+                            command.Parameters.AddWithValue("@errorMessage", FormatErrorMessage(exception));
+                        else
+                            command.Parameters.AddWithValue("@errorMessage", DBNull.Value);
+                        command.Transaction = transaction;
+                        command.ExecuteNonQuery();
+                    }
+                });
+            } catch (Exception e) {
+                Logger.Fatal("Failed to write ServiceBroker Error Message", e);
+                // suppress -- don't let this exception take down the process
+            }
+        }
+
+        private static string FormatErrorMessage(Exception e) {
+            var message = e.Message + Environment.NewLine + e.StackTrace;
+            if (e.InnerException != null)
+                message = message + Environment.NewLine + FormatErrorMessage(e.InnerException);
+            return message;
+        }
+
+        public void ForwardFaultsTo(IEnumerable<string> faultForwardDestinations) {
+            foreach (var item in faultForwardDestinations) {
+                this.faultForwardDestinations.Add(item);
+            }
+        }
+       
+        private void SendFailureMessage(TransportMessage message, Exception e, string reason) {
+            if (message == null)
+                return;
+            message.MessageIntent = MessageIntentEnum.FaultNotification;
+            SetExceptionHeaders(message, e, reason);
+            try {
+                Send(message, this.faultForwardDestinations);
+            } catch (Exception exception) {
+                var errorMessage = string.Format("Could not forward failed message to error queue, reason: {0}.", exception.ToString());
+                Logger.Fatal(errorMessage, exception);
+                throw new InvalidOperationException(errorMessage, exception);
+            }
+        }
+
+        private void SetExceptionHeaders(TransportMessage message, Exception e, string reason) {
+            if (message.Headers == null)
+                message.Headers = new List<HeaderInfo>();
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.Reason", Value = reason });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.ExceptionType", Value = e.GetType().FullName });
+
+            if (e.InnerException != null)
+                message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.InnerExceptionType", Value = e.InnerException.GetType().FullName });
+
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.HelpLink", Value = e.HelpLink });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.Message", Value = e.Message });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.Source", Value = e.Source });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ExceptionInfo.StackTrace", Value = e.StackTrace });
+
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.OriginalId", Value = message.Id });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.FaultedAddress", Value = this.ReturnAddress });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ServiceBroker.FaultedService", Value = this.ReturnAddress });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.ServiceBroker.FaultedQueue", Value = this.ListenerQueue });
+            message.Headers.Add(new HeaderInfo() { Key = "CWServiceBus.TimeOfFailure", Value = DateTime.UtcNow.ToString("o") });
+
         }
     }
 }
