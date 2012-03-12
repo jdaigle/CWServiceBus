@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config\ITransportBuilder.cs" />
+    <Compile Include="ControlMessage.cs" />
     <Compile Include="Dispatch\DispatchExtensions.cs" />
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageDispatcher.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Transport\TransportMessageHandlingFailedException.cs" />
     <Compile Include="Transport\TransportMessageReceivedEventArgs.cs" />
     <Compile Include="IStartableMessageBus.cs" />
+    <Compile Include="Unicast\InMemorySubscriptionStorage.cs" />
     <Compile Include="Unicast\MessageType.cs" />
     <Compile Include="Transport\TransportMessage.cs" />
     <Compile Include="Unicast\ISubscriptionStorage.cs" />

@@ -23,6 +23,7 @@ namespace CWServiceBus {
             this.MessageTypeConventions = new MessageTypeConventions();
             messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
             this.MessageEndpointMappingCollection = new MessageEndpointMappingCollection();
+            AddAssemblyToScan(Assembly.Load("CWServiceBus.Core"));
         }
 
         private IStartableMessageBus Build() {
@@ -62,7 +63,7 @@ namespace CWServiceBus {
             var transport = TransportBuilder.Build();
 
             var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
-            var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, null);
+            var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, SubscriptionStorage);
             messageBus.MapMessageTypesToAddress(typesToEndpoints);
             return messageBus;
         }
@@ -90,5 +91,6 @@ namespace CWServiceBus {
         public MessageTypeConventions MessageTypeConventions { get; private set; }
         public IMessageSerializer MessageSerializer { get; private set; }
         public ITransportBuilder TransportBuilder { get; set; }
+        public ISubscriptionStorage SubscriptionStorage { get; set; }
     }
 }

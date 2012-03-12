@@ -8,6 +8,8 @@ using log4net;
 namespace CWServiceBus.Unicast {
     public class UnicastMessageBus : IMessageBus, IStartableMessageBus {
 
+        public const string SubscriptionMessageType = "SubscriptionMessageType";
+
         private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastMessageBus));
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
@@ -70,8 +72,12 @@ namespace CWServiceBus.Unicast {
         }
 
         public void Subscribe(string publishingService, Type messageType) {
-            throw new NotImplementedException();
-            //Logger.Info("Subscribing to " + messageType.AssemblyQualifiedName + " at publisher queue " + destination);
+            if (string.IsNullOrWhiteSpace(publishingService)) {
+                publishingService = GetDestinationServiceForMessage(messageType);
+            }
+            Logger.Info("Subscribing to " + messageType.AssemblyQualifiedName + " at publisher " + publishingService);
+            this.SetHeader(SubscriptionMessageType, messageType.AssemblyQualifiedName);
+            SendMessage(publishingService, null, MessageIntentEnum.Subscribe, new ControlMessage());
         }
 
         public void Subscribe<T>() {
@@ -87,7 +93,12 @@ namespace CWServiceBus.Unicast {
         }
 
         public void Unsubscribe(string publishingService, Type messageType) {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(publishingService)) {
+                publishingService = GetDestinationServiceForMessage(messageType);
+            }
+            Logger.Info("Unsubscribing from " + messageType.AssemblyQualifiedName + " at publisher " + publishingService);
+            this.SetHeader(SubscriptionMessageType, messageType.AssemblyQualifiedName);
+            SendMessage(publishingService, null, MessageIntentEnum.Unsubscribe, new ControlMessage());
         }
 
         public void Unsubscribe<T>() {
@@ -175,10 +186,36 @@ namespace CWServiceBus.Unicast {
         private void Transport_TransportMessageReceived(object sender, TransportMessageReceivedEventArgs e) {
             this.OutgoingHeaders.Clear();
             _messageBeingHandled = e.Message;
+            if (e.Message.Body.Any(x => x is ControlMessage)) {
+                if (HandleControlMessage())
+                    return;
+            }
             using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
                 childServiceLocator.RegisterComponent<IMessageBus>(this);
                 this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
             }
+        }
+
+        private bool HandleControlMessage() {
+            if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Subscribe ||
+                _messageBeingHandled.MessageIntent == MessageIntentEnum.Unsubscribe) {
+                var messageTypeString = this.GetHeader(SubscriptionMessageType);
+                if (subscriptionStorage == null) {
+                    var warning = string.Format("Subscription message from {0} arrived at this endpoint, yet this endpoint is not configured to be a publisher.", _messageBeingHandled.ReturnAddress);
+                    Logger.Warn(warning);
+                    return true;
+                }
+                if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Subscribe) {
+                    Logger.Info("Subscribing " + _messageBeingHandled.ReturnAddress + " to message type " + messageTypeString);
+                    subscriptionStorage.Subscribe(_messageBeingHandled.ReturnAddress, new[] { new MessageType(messageTypeString) });
+                }
+                if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Unsubscribe) {
+                    Logger.Info("Unsubscribing " + _messageBeingHandled.ReturnAddress + " from message type " + messageTypeString);
+                    subscriptionStorage.Unsubscribe(_messageBeingHandled.ReturnAddress, new[] { new MessageType(messageTypeString) });
+                }
+                return true;
+            }
+            return false;
         }
 
         public void HandleCurrentMessageLater() {

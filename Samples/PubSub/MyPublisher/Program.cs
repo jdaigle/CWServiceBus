@@ -3,6 +3,7 @@ using System.Reflection;
 using CWServiceBus;
 using CWServiceBus.ServiceBroker;
 using CWServiceBus.StructureMap;
+using CWServiceBus.Unicast;
 using MyMessages;
 using StructureMap;
 
@@ -26,6 +27,7 @@ namespace MyPublisher {
                     t.NumberOfWorkerThreads = 1;
                     t.ServiceBrokerConnectionString = "Data Source=localhost;Initial Catalog=ServiceBus;Trusted_Connection=true";
                 });
+                builder.SubscriptionStorage = new InMemorySubscriptionStorage();
             });
 
             messageBus.Start();
