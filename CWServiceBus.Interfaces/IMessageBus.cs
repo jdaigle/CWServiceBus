@@ -6,7 +6,7 @@ namespace CWServiceBus
 	/// <summary>
 	/// Defines a Bus which can Send/Receive/Publish Messages
 	/// </summary>
-    public interface IServiceBus : IMessageCreator
+    public interface IMessageBus : IMessageCreator
     {
 	    void Publish<T>(params T[] messages);
         void Publish<T>(Action<T> messageConstructor);
@@ -14,11 +14,7 @@ namespace CWServiceBus
         void Subscribe(Type messageType);
         void Subscribe(string publishingService, Type messageType);
         void Subscribe<T>();
-        void Subscribe<T>(string publishingService);
-        void Subscribe(Type messageType, Predicate<object> condition);
-        void Subscribe(string publishingService, Type messageType, Predicate<object> condition);
-        void Subscribe<T>(Predicate<T> condition);
-        void Subscribe<T>(string publishingService, Predicate<T> condition);
+        void Subscribe<T>(string publishingService);        
         void Unsubscribe(Type messageType);
         void Unsubscribe(string publishingService, Type messageType);
         void Unsubscribe<T>();

@@ -6,17 +6,17 @@ using CWServiceBus.Transport;
 using log4net;
 
 namespace CWServiceBus.Unicast {
-    public class UnicastServiceBus : IServiceBus, IStartableServiceBus {
+    public class UnicastMessageBus : IMessageBus, IStartableMessageBus {
 
-        private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastServiceBus));
+        private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastMessageBus));
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
         private ITransport transport;
         private IMessageDispatcher messageDispatcher;
 
-        public UnicastServiceBus() { }
+        public UnicastMessageBus() { }
 
-        public UnicastServiceBus(IMessageMapper messageMapper, ITransport transport, IMessageDispatcher messageDispatcher, ISubscriptionStorage subscriptionStorage) {
+        public UnicastMessageBus(IMessageMapper messageMapper, ITransport transport, IMessageDispatcher messageDispatcher, ISubscriptionStorage subscriptionStorage) {
             this.messageMapper = messageMapper;
             this.Transport = transport;
             this.messageDispatcher = messageDispatcher;
@@ -70,9 +70,7 @@ namespace CWServiceBus.Unicast {
         }
 
         public void Subscribe(string publishingService, Type messageType) {
-
-
-
+            throw new NotImplementedException();
             //Logger.Info("Subscribing to " + messageType.AssemblyQualifiedName + " at publisher queue " + destination);
         }
 
@@ -81,27 +79,11 @@ namespace CWServiceBus.Unicast {
         }
 
         public void Subscribe<T>(string publishingService) {
-            throw new NotImplementedException();
-        }
-
-        public void Subscribe(Type messageType, Predicate<object> condition) {
-            throw new NotImplementedException();
-        }
-
-        public void Subscribe(string publishingService, Type messageType, Predicate<object> condition) {
-            throw new NotImplementedException();
-        }
-
-        public void Subscribe<T>(Predicate<T> condition) {
-            throw new NotImplementedException();
-        }
-
-        public void Subscribe<T>(string publishingService, Predicate<T> condition) {
-            throw new NotImplementedException();
+            Subscribe(publishingService, typeof(T));
         }
 
         public void Unsubscribe(Type messageType) {
-            throw new NotImplementedException();
+            Unsubscribe(null, messageType);
         }
 
         public void Unsubscribe(string publishingService, Type messageType) {
@@ -109,11 +91,11 @@ namespace CWServiceBus.Unicast {
         }
 
         public void Unsubscribe<T>() {
-            throw new NotImplementedException();
+            Unsubscribe(typeof(T));
         }
 
         public void Unsubscribe<T>(string publishingService) {
-            throw new NotImplementedException();
+            Unsubscribe(publishingService, typeof(T));
         }
 
         public void SendLocal(params object[] messages) {
@@ -124,28 +106,28 @@ namespace CWServiceBus.Unicast {
             throw new NotImplementedException();
         }
 
-        void IServiceBus.Send(params object[] messages) {
+        void IMessageBus.Send(params object[] messages) {
             var destination = GetDestinationServiceForMessages(messages);
             SendMessage(destination, null, MessageIntentEnum.Send, messages);
         }
 
-        void IServiceBus.Send<T>(Action<T> messageConstructor) {
-            ((IServiceBus)this).Send(CreateInstance(messageConstructor));
+        void IMessageBus.Send<T>(Action<T> messageConstructor) {
+            ((IMessageBus)this).Send(CreateInstance(messageConstructor));
         }
 
-        void IServiceBus.Send(string destinationService, params object[] messages) {
+        void IMessageBus.Send(string destinationService, params object[] messages) {
             SendMessage(destinationService, null, MessageIntentEnum.Send, messages);
         }
 
-        void IServiceBus.Send<T>(string destinationService, Action<T> messageConstructor) {
+        void IMessageBus.Send<T>(string destinationService, Action<T> messageConstructor) {
             SendMessage(destinationService, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
-        void IServiceBus.Send(string destinationService, Guid correlationId, params object[] messages) {
+        void IMessageBus.Send(string destinationService, Guid correlationId, params object[] messages) {
             SendMessage(destinationService, correlationId, MessageIntentEnum.Send, messages);
         }
 
-        void IServiceBus.Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor) {
+        void IMessageBus.Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor) {
             SendMessage(destinationService, correlationId, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
@@ -194,7 +176,7 @@ namespace CWServiceBus.Unicast {
             this.OutgoingHeaders.Clear();
             _messageBeingHandled = e.Message;
             using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
-                childServiceLocator.RegisterComponent<IServiceBus>(this);
+                childServiceLocator.RegisterComponent<IMessageBus>(this);
                 this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
             }
         }

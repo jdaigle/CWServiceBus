@@ -9,23 +9,23 @@ using CWServiceBus.Unicast;
 using log4net;
 
 namespace CWServiceBus {
-    public class ServiceBusBuilder {
+    public class MessageBusBuilder {
 
-        private static ILog Logger = log4net.LogManager.GetLogger(typeof(ServiceBusBuilder));
+        private static ILog Logger = log4net.LogManager.GetLogger(typeof(MessageBusBuilder));
 
-        public static IStartableServiceBus Initialize(Action<ServiceBusBuilder> intialize) {
-            var builder = new ServiceBusBuilder();
+        public static IStartableMessageBus Initialize(Action<MessageBusBuilder> intialize) {
+            var builder = new MessageBusBuilder();
             intialize(builder);
             return builder.Build();
         }
 
-        public ServiceBusBuilder() {
+        public MessageBusBuilder() {
             this.MessageTypeConventions = new MessageTypeConventions();
             messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
             this.MessageEndpointMappingCollection = new MessageEndpointMappingCollection();
         }
 
-        private IStartableServiceBus Build() {
+        private IStartableMessageBus Build() {
             messageHandlers.AddAssembliesToScan(assembliesToScan);
             messageHandlers.Init();
 
@@ -62,9 +62,9 @@ namespace CWServiceBus {
             var transport = TransportBuilder.Build();
 
             var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
-            var serviceBus = new UnicastServiceBus(messageMapper, transport, messageDispatcher, null);
-            serviceBus.MapMessageTypesToAddress(typesToEndpoints);
-            return serviceBus;
+            var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, null);
+            messageBus.MapMessageTypesToAddress(typesToEndpoints);
+            return messageBus;
         }
 
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();

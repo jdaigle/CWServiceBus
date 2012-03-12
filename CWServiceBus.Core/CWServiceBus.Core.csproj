@@ -60,7 +60,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serializers\XmlTransportMessageSerializer.cs" />
     <Compile Include="Serializers\XML\XmlMessageSerializer.cs" />
-    <Compile Include="ServiceBusBuilder.cs" />
+    <Compile Include="MessageBusBuilder.cs" />
     <Compile Include="Transport\AbortHandlingCurrentMessageException.cs" />
     <Compile Include="Transport\FailedMessageProcessingEventArgs.cs" />
     <Compile Include="Transport\HeaderInfo.cs" />
@@ -70,12 +70,12 @@
     <Compile Include="Transport\StartedMessageProcessingEventArgs.cs" />
     <Compile Include="Transport\TransportMessageHandlingFailedException.cs" />
     <Compile Include="Transport\TransportMessageReceivedEventArgs.cs" />
-    <Compile Include="IStartableServiceBus.cs" />
+    <Compile Include="IStartableMessageBus.cs" />
     <Compile Include="Unicast\MessageType.cs" />
     <Compile Include="Transport\TransportMessage.cs" />
     <Compile Include="Unicast\ISubscriptionStorage.cs" />
     <Compile Include="Unicast\MessageContext.cs" />
-    <Compile Include="Unicast\UnicastServiceBus.cs" />
+    <Compile Include="Unicast\UnicastMessageBus.cs" />
     <Compile Include="WorkerThread.cs" />
   </ItemGroup>
   <ItemGroup>
