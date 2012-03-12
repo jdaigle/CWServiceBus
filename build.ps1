@@ -6,10 +6,10 @@ param(
   )
 
 if(($taskList -eq $null) -or ($args -eq $null)){
-	$taskList = @("CompileMain")
+	$taskList = @("Build")
 }
 elseif($taskList.Count -le 0){
-	$taskList = @("CompileMain")
+	$taskList = @("Build")
 }
 
 

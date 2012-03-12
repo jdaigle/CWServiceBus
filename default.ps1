@@ -16,6 +16,7 @@ $buildBase = "$baseDir\build\"
 $slnFile = "$baseDir\CWServiceBus.sln"
 $toolsDir = "tools"
 $nunitexec = "tools\nunit\nunit-console.exe"
+$script:nunitTargetFramework = "/framework=4.0";
 
 include $toolsDir\psake\buildutils.ps1
 
@@ -56,6 +57,14 @@ task Init -depends InitEnvironment, Clean {
 	echo "Current Directory: $currentDirectory" 
  }
   
-task CompileMain -depends Init -description "A build script CompileMain " { 
-    exec { &$script:msBuild $slnFile /p:Configuration=Release /p:OutDir="$buildBase\" }	
+task Compile -depends Init -description "A build script CompileMain " { 
+    exec { &$script:msBuild $slnFile /p:Configuration=Release /p:OutDir="$buildBase\" }	    
+}
+
+task Tests -depends Compile {
+    exec {&$nunitexec $buildBase\CWServiceBus.UnitTests.dll $script:nunitTargetFramework} 
+}
+
+task Build -depends Compile, Tests {
+
 }
