@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using log4net;
 
 namespace CWServiceBus.Dispatch {
@@ -137,8 +138,7 @@ namespace CWServiceBus.Dispatch {
         public IEnumerable<DispatchInfo> GetOrderedDispatchInfoFor(Type messageType) {
             AssertInit();
             foreach (var messageHandlerType in GetHandlerTypes(messageType)) {
-                // TODO: somehow cache the DispatchInfo?
-                yield return new DispatchInfo(messageType, messageHandlerType, GetHandleMethod(messageHandlerType, messageType));
+                yield return GetDispatchInfo(messageHandlerType, messageType);
             }
         }
 
@@ -151,7 +151,42 @@ namespace CWServiceBus.Dispatch {
                     }
         }
 
-        static MethodInfo GetHandleMethod(Type targetType, Type messageType) {
+        private static readonly IDictionary<Type, IDictionary<Type, DispatchInfo>> dispatchInfoCache = new Dictionary<Type, IDictionary<Type, DispatchInfo>>();
+        private static readonly ReaderWriterLockSlim dispatchInfoCacheLocker = new ReaderWriterLockSlim();
+
+        static DispatchInfo GetDispatchInfo(Type targetType, Type messageType) {
+            DispatchInfo dispatchInfo = null;
+            dispatchInfoCacheLocker.EnterReadLock();
+            {
+                if (dispatchInfoCache.ContainsKey(targetType)) {
+                    var targetCache = dispatchInfoCache[targetType];
+                    if (targetCache.ContainsKey(messageType)) {
+                        dispatchInfo = targetCache[messageType];
+                    }
+                }
+            }
+            dispatchInfoCacheLocker.ExitReadLock();
+
+            if (dispatchInfo != null)
+                return dispatchInfo;
+
+            dispatchInfo = new DispatchInfo(messageType, targetType, FindHandleMethod(targetType, messageType));
+            dispatchInfoCacheLocker.EnterWriteLock();
+            {
+                if (!dispatchInfoCache.ContainsKey(targetType)) {
+                    dispatchInfoCache.Add(targetType, new Dictionary<Type, DispatchInfo>());
+                }
+                var targetCache = dispatchInfoCache[targetType];
+                if (targetCache.ContainsKey(messageType)) {
+                    targetCache.Add(messageType, dispatchInfo);
+                }
+            }
+            dispatchInfoCacheLocker.ExitWriteLock();
+
+            return dispatchInfo;
+        }
+
+        static MethodInfo FindHandleMethod(Type targetType, Type messageType) {
             var method = targetType.GetMethod("Handle", new[] { messageType });
             if (method != null) return method;
 
