@@ -23,20 +23,16 @@ namespace CWServiceBus {
 
         private IStartableServiceBus Build() {
             messageHandlers.AddAssembliesToScan(assembliesToScan);
-            messageHandlers.AddAdditonalMessageTypes(MessageTypeConventions.ScanAssembliesForMessageTypes(assembliesToScan));
             messageHandlers.Init();
 
             var messageMapper = new MessageMapper();
             messageMapper.SetMessageTypeConventions(this.MessageTypeConventions);
             messageMapper.Initialize(MessageTypeConventions.ScanAssembliesForMessageTypes(assembliesToScan));
-            messageMapper.
-            //messageMapper.Initialize(messageHandlers.AllMessageTypes().Concat(additionalMessageTypes).Distinct());
 
             var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
 
             MessageSerializer = new XmlMessageSerializer(messageMapper);
             (MessageSerializer as XmlMessageSerializer).Initialize(messageHandlers.AllMessageTypes().Distinct());
-            //serializer.Initialize(messageHandlers.AllMessageTypes().Concat(additionalMessageTypes).Distinct());
 
             var transport = TransportBuilder.Build();
 

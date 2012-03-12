@@ -19,6 +19,7 @@ namespace CWServiceBus.Samples.RequestServerService {
             var serviceBus = ServiceBusBuilder.Initialize(builder => {
                 builder.ServiceLocator = new StructureMapServiceLocator(container);
                 builder.MessageTypeConventions.AddConvention(t => t.Namespace == "CWServiceBus.Samples.Messages");
+                builder.AddAssembliesToScan(Assembly.Load("CWServiceBus.Samples.Messages"));
                 builder.AddAssembliesToScan(Assembly.Load("CWServiceBus.Samples.RequestServerService"));
                 builder.UseServiceBrokerTransport(t => {
                     t.ListenerQueue = "CWServiceBusTestQueue";

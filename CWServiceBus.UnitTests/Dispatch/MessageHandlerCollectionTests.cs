@@ -30,33 +30,33 @@ namespace CWServiceBus.Dispatch {
             messageHandlerCollection.AddAssemblyToScan(GetType().Assembly);
             messageHandlerCollection.Init();
             messageHandlerCollection.AllMessageTypes().Contains(typeof(MessageWithoutHandler));
-            Assert.IsEmpty(messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithoutHandler)));
+            Assert.IsEmpty(messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithoutHandler)));
         }
 
         [Test]
         public void Can_Find_Basic_MessageHandlers() {
-            var handlers = messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithInterface));
+            var handlers = messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).ToList();
             Assert.AreEqual(2, handlers.Count());
             Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler1)));
             Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler3)));
 
-            handlers = messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithoutInterface));
+            handlers = messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithoutInterface)).ToList();
             Assert.AreEqual(2, handlers.Count());
             Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler2)));
             Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler3)));
         }
 
         [Test]
-        public void Can_Find_MessageHandler_For_ParentType() {
-            var handlers = messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithCustomInterface));
-            Assert.AreEqual(1, handlers.Count());
+        public void Can_Find_MessageHandler_For_ChildType() {
+            var handlers = messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithCustomInterface)).ToList();
+            Assert.AreEqual(2, handlers.Count());
             Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler4)));
-            Assert.AreEqual(1, handlers.Count(x => x.MessageType == typeof(MessageWithCustomInterface)));
-            var methodInfo = handlers.First().MethodInfo;
+            Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler5)));
+            var methodInfo = handlers.First(x => x.InstanceType == typeof(MessageHandler5)).MethodInfo;
 
-            handlers = messageHandlerCollection.GetOrderedHandlersFor(typeof(ICustomMessage));
+            handlers = messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(ICustomMessage)).ToList();
             Assert.AreEqual(1, handlers.Count());
-            Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler4)));
+            Assert.AreEqual(1, handlers.Count(x => x.InstanceType == typeof(MessageHandler5)));
             Assert.AreEqual(1, handlers.Count(x => x.MessageType == typeof(ICustomMessage)));
             Assert.AreEqual(methodInfo, handlers.First().MethodInfo);
         }
@@ -64,10 +64,10 @@ namespace CWServiceBus.Dispatch {
         [Test]
         public void Can_Order_Handlers() {
             messageHandlerCollection.ExecuteTheseHandlersFirst(typeof(MessageHandler3));
-            Assert.AreEqual(typeof(MessageHandler3), messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithInterface)).First().InstanceType);
+            Assert.AreEqual(typeof(MessageHandler3), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).First().InstanceType);
 
             messageHandlerCollection.ExecuteTheseHandlersFirst(typeof(MessageHandler1));
-            Assert.AreEqual(typeof(MessageHandler1), messageHandlerCollection.GetOrderedHandlersFor(typeof(MessageWithInterface)).First().InstanceType);
+            Assert.AreEqual(typeof(MessageHandler1), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).First().InstanceType);
         }
     }
 }

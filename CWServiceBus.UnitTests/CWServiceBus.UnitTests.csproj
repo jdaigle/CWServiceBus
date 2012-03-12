@@ -46,6 +46,8 @@
   <ItemGroup>
     <Compile Include="Dispatch\DispatchExtensionsTests.cs" />
     <Compile Include="Dispatch\MessageHandlerCollectionTests.cs" />
+    <Compile Include="Dispatch\ReflectionTests.cs" />
+    <Compile Include="Dispatch\TestData\MessageHandler5.cs" />
     <Compile Include="Dispatch\TestData\MessageWithoutHandler.cs" />
     <Compile Include="Dispatch\TestData\MessageHandler4.cs" />
     <Compile Include="Dispatch\TestData\MessageHandler3.cs" />

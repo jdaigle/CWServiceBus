@@ -2,14 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using log4net;
 
 namespace CWServiceBus.Dispatch {
     public class MessageHandlerCollection {
 
+        public static ILog Logger = LogManager.GetLogger(typeof(MessageHandlerCollection).Namespace);
         private bool isInit;
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();
-        private ISet<Type> additionalMessageTypes = new HashSet<Type>();
-        private IDictionary<Type, IList<DispatchInfo>> messageHandlers = new Dictionary<Type, IList<DispatchInfo>>();
+        private ISet<Type> additionalMessageHandlerTypes = new HashSet<Type>();
+        private MessageTypeConventions messageTypeConventions;
+
+        /// <summary>
+        /// Dictionary keyed by MessageHandlerType, contains list of handled messages per message handler
+        /// </summary>
+        private readonly IDictionary<Type, List<Type>> handlerList = new Dictionary<Type, List<Type>>();
+        private List<Type> orderedMessageHandlerList = new List<Type>();
+
+        //private IDictionary<Type, IList<DispatchInfo>> messageHandlers = new Dictionary<Type, IList<DispatchInfo>>();
 
         /// <summary>
         /// Scans all assemblies and returns a distinct list of all classes which implement IMessageHandler<>
@@ -23,21 +33,11 @@ namespace CWServiceBus.Dispatch {
         }
 
         /// <summary>
-        /// Scans all message handler types and returns a distinct list of all message types handled
+        /// Scans all types and returns a distinct list of all classes which implement IMessageHandler<>
         /// </summary>
-        /// <remarks>
-        /// For all class implementing the generic IMessageHandler<>
-        /// Select each closed IMessageHandler<> interface, get the type used to the close the generic interface
-        /// </remarks>
-        public static IList<Type> FindAllMessageTypesForDispatch(IEnumerable<Type> messageHandlerTypes) {
-            var types = new List<Type>();
-            types.AddRange(messageHandlerTypes
-                                   .SelectMany(x => x.GetInterfaces().Where(i => i.IsMessageHandlerInterfaceType())
-                                                                     .Select(i => i.GetGenericArguments().FirstOrDefault())));
-            return types.Distinct().ToList();
+        public static IList<Type> FindAllMessageHandlerTypes(IEnumerable<Type> types) {
+            return types.Where(t => t.IsMessageHandlerClassType()).Distinct().ToList();
         }
-
-        private MessageTypeConventions messageTypeConventions;
 
         public MessageHandlerCollection() {
             this.messageTypeConventions = MessageTypeConventions.Default;
@@ -57,52 +57,39 @@ namespace CWServiceBus.Dispatch {
 
         public void Init() {
             if (isInit) return;
-            var messageHandlerTypes = FindAllMessageHandlerTypes(assembliesToScan);
-            IEnumerable<Type> messageTypes = FindAllMessageTypesForDispatch(messageHandlerTypes);
-            messageTypes = messageTypes.Concat(additionalMessageTypes).Distinct();
-            foreach (var messageType in messageTypes) {
-                RegisterDispatchHandler(messageType, messageHandlerTypes);
-            }
-            this.isInit = true;
-        }
 
-        private void RegisterDispatchHandler(Type messageType, IEnumerable<Type> messageHandlerTypes) {
-            if (!messageHandlers.ContainsKey(messageType))
-                messageHandlers.Add(messageType, new List<DispatchInfo>());
-            foreach (var instanceType in messageHandlerTypes.Where(t => t.IsMessageHandlerClassTypeForMessageType(messageType))) {
-                foreach (var methodInfo in instanceType.GetMethods().Where(x => x.IsHandleMethodForMessageType(messageType))) {
-                    if (messageHandlers[messageType].Any(x => x.MessageType == messageType &&
-                                                              x.InstanceType == instanceType &&
-                                                              x.MethodInfo == methodInfo)) {
-                        continue;
+            var messageHandlerTypes =
+                FindAllMessageHandlerTypes(assembliesToScan)
+                .Concat(FindAllMessageHandlerTypes(additionalMessageHandlerTypes))
+                .Distinct().ToList();
+
+            foreach (Type messageHandlerType in messageHandlerTypes) {
+                foreach (var messageType in messageHandlerType.GetMessageTypesIfIsMessageHandler()) {
+                    if (!handlerList.ContainsKey(messageHandlerType))
+                        handlerList.Add(messageHandlerType, new List<Type>());
+
+                    if (!(handlerList[messageHandlerType].Contains(messageType))) {
+                        handlerList[messageHandlerType].Add(messageType);
+                        Logger.DebugFormat("Associated '{0}' message with '{1}' handler", messageType, messageHandlerType);
                     }
-                    messageHandlers[messageType].Add(new DispatchInfo(messageType, instanceType, methodInfo));
                 }
             }
+            orderedMessageHandlerList = handlerList.Keys.ToList();
 
-            if (messageType.IsClass && messageType.BaseType != typeof(object)) {
-                if (messageTypeConventions.IsMessageType(messageType.BaseType))
-                    RegisterDispatchHandler(messageType.BaseType, messageHandlerTypes);
-            }
-            foreach (var _interface in messageType.GetInterfaces()) {
-                if (messageTypeConventions.IsMessageType(_interface))
-                    RegisterDispatchHandler(_interface, messageHandlerTypes);
-            }
+            this.isInit = true;
         }
 
         public void ExecuteTheseHandlersFirst(params Type[] handlerTypes) {
             AssertInit();
-            foreach (var messageType in messageHandlers.Keys.ToList()) {
-                var handlers = messageHandlers[messageType];
-                var firstOrderedHandlers = new HashSet<DispatchInfo>();
-                foreach (var handler in handlerTypes) {
-                    var firstOrderedHandler = handlers.FirstOrDefault(x => handler.IsAssignableFrom(x.InstanceType));
-                    if (firstOrderedHandler != null && !firstOrderedHandlers.Contains(firstOrderedHandler)) {
-                        firstOrderedHandlers.Add(firstOrderedHandler);
-                    }
+            var firstOrderedHandlers = new HashSet<Type>();
+            foreach (var handler in handlerTypes) {
+                var firstOrderedHandler = orderedMessageHandlerList.FirstOrDefault(x => handler.IsAssignableFrom(x));
+                if (firstOrderedHandler != null && !firstOrderedHandlers.Contains(firstOrderedHandler)) {
+                    firstOrderedHandlers.Add(firstOrderedHandler);
                 }
-                messageHandlers[messageType] = new List<DispatchInfo>(firstOrderedHandlers.Concat(handlers.Except(firstOrderedHandlers)));
             }
+            var allOtherHandlers = orderedMessageHandlerList.Except(firstOrderedHandlers).ToList();
+            orderedMessageHandlerList = firstOrderedHandlers.Concat(allOtherHandlers).ToList();
         }
 
         public void AddAssembliesToScan(IEnumerable<Assembly> messageHandlerAssemblies) {
@@ -122,81 +109,56 @@ namespace CWServiceBus.Dispatch {
             AddAssembliesToScan(new[] { messageHandlerAssembly });
         }
 
-        public void AddAdditonalMessageTypes(IEnumerable<Type> messageTypes) {
+        public void AddAdditonalMessageHandlerTypes(IEnumerable<Type> messageHandlerTypes) {
             AssertNotInit();
-            foreach (var type in messageTypes) {
-                additionalMessageTypes.Add(type);
+            foreach (var type in messageHandlerTypes) {
+                additionalMessageHandlerTypes.Add(type);
             }
         }
 
-        public void AddAdditonalMessageTypes(params Type[] messageTypes) {
+        public void AddAdditonalMessageHandlerTypes(params Type[] messageHandlerTypes) {
             AssertNotInit();
-            AddAdditonalMessageTypes((IEnumerable<Type>)messageTypes);
+            AddAdditonalMessageHandlerTypes((IEnumerable<Type>)messageHandlerTypes);
         }
 
-        public void AddAdditonalMessageType(Type messageType) {
+        public void AddAdditonalMessageHandlerType(Type messageHandlerType) {
             AssertNotInit();
-            AddAdditonalMessageTypes(new[] { messageType });
+            AddAdditonalMessageHandlerTypes(new[] { messageHandlerType });
         }
 
         public IEnumerable<Type> AllMessageTypes() {
             AssertInit();
-            return messageHandlers.Keys;
+            foreach (var handlerType in handlerList.Keys)
+                foreach (var typeHandled in handlerList[handlerType])
+                    if (messageTypeConventions.IsMessageType(typeHandled))
+                        yield return typeHandled;
         }
 
-        public IEnumerable<DispatchInfo> GetOrderedHandlersFor(Type messageType) {
+        public IEnumerable<DispatchInfo> GetOrderedDispatchInfoFor(Type messageType) {
             AssertInit();
-            if (messageHandlers.ContainsKey(messageType)) {
-                return messageHandlers[messageType];
-            } else {
-                return new DispatchInfo[0];
+            foreach (var messageHandlerType in GetHandlerTypes(messageType)) {
+                // TODO: somehow cache the DispatchInfo?
+                yield return new DispatchInfo(messageType, messageHandlerType, GetHandleMethod(messageHandlerType, messageType));
             }
         }
 
-        /* AFTER THIS LINE IS POSSIBLE NEW IMPLEMENTATION */
-
-        /// <summary>
-        /// Evaluates a type and loads it if it implements IMessageHander{T}.
-        /// </summary>
-        /// <param name="handler">The type to evaluate.</param>
-        void IfTypeIsMessageHandlerThenLoad(Type handler) {
-            if (handler.IsAbstract)
-                return;
-
-
-            foreach (var messageType in GetMessageTypesIfIsMessageHandler(handler)) {
-                if (!handlerList.ContainsKey(handler))
-                    handlerList.Add(handler, new List<Type>());
-
-                if (!(handlerList[handler].Contains(messageType))) {
-                    handlerList[handler].Add(messageType);
-                    Log.DebugFormat("Associated '{0}' message with '{1}' handler", messageType, handler);
-                }
-
-                HandlerInvocationCache.CacheMethodForHandler(handler, messageType);
-            }
+        private IEnumerable<Type> GetHandlerTypes(Type messageType) {
+            foreach (var handlerType in orderedMessageHandlerList)
+                foreach (var msgTypeHandled in handlerList[handlerType])
+                    if (msgTypeHandled.IsAssignableFrom(messageType)) {
+                        yield return handlerType;
+                        break;
+                    }
         }
 
+        static MethodInfo GetHandleMethod(Type targetType, Type messageType) {
+            var method = targetType.GetMethod("Handle", new[] { messageType });
+            if (method != null) return method;
 
-        /// <summary>
-        /// If the type is a message handler, returns all the message types that it handles
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        private static IEnumerable<Type> GetMessageTypesIfIsMessageHandler(Type type) {
-            foreach (var t in type.GetInterfaces()) {
-                if (t.IsGenericType) {
-                    var args = t.GetGenericArguments();
-                    if (args.Length != 1)
-                        continue;
-
-                    var handlerType = typeof(IMessageHandler<>).MakeGenericType(args[0]);
-                    if (handlerType.IsAssignableFrom(t))
-                        yield return args[0];
-                }
-            }
+            var handlerType = typeof(IMessageHandler<>).MakeGenericType(messageType);
+            return targetType.GetInterfaceMap(handlerType)
+                .TargetMethods
+                .FirstOrDefault();
         }
-
-        private readonly IDictionary<Type, List<Type>> handlerList = new Dictionary<Type, List<Type>>();
     }
 }

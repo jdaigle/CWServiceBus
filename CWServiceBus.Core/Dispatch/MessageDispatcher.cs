@@ -22,9 +22,9 @@ namespace CWServiceBus.Dispatch {
                     OnDispatching(childServiceLocator, messages, messageContext);
                     foreach (var message in messages) {
                         var messageType = message.GetType();
-                        foreach (var messageHandler in messageHandlers.GetOrderedHandlersFor(messageType)) {
-                            var handler = childServiceLocator.Get(messageHandler.InstanceType);
-                            messageHandler.MethodInfo.Invoke(handler, new[] { message });
+                        foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType)) {
+                            var handler = childServiceLocator.Get(messageHandlerDispatchInfo.InstanceType);
+                            messageHandlerDispatchInfo.Invoke(handler, message);
                         }
                     }
                 } catch (Exception e) {
