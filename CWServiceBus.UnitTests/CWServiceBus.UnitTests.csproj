@@ -34,6 +34,9 @@
     <Reference Include="nunit.framework">
       <HintPath>..\tools\nunit\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="StructureMap">
+      <HintPath>..\external-bin\StructureMap.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -44,6 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandBus\CommandBusTests.cs" />
+    <Compile Include="CommandBus\Handlers.cs" />
+    <Compile Include="CommandBus\Messages.cs" />
     <Compile Include="Dispatch\DispatchExtensionsTests.cs" />
     <Compile Include="Dispatch\MessageHandlerCollectionTests.cs" />
     <Compile Include="Dispatch\ReflectionTests.cs" />
@@ -75,6 +81,14 @@
     <Compile Include="Serializers\XML\SomeEnum.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CWServiceBus.CommandBus.Core\CWServiceBus.CommandBus.Core.csproj">
+      <Project>{1E3087D7-3754-4C65-ADF5-02A04D71C5CF}</Project>
+      <Name>CWServiceBus.CommandBus.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CWServiceBus.CommandBus.Interfaces\CWServiceBus.CommandBus.Interfaces.csproj">
+      <Project>{37471641-C944-4E09-97CA-AF4193B49A73}</Project>
+      <Name>CWServiceBus.CommandBus.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CWServiceBus.Core\CWServiceBus.Core.csproj">
       <Project>{EE848BE5-1F66-4F6C-9DB6-6DE1E36B0EDB}</Project>
       <Name>CWServiceBus.Core</Name>
@@ -82,6 +96,14 @@
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
       <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
       <Name>CWServiceBus.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CWServiceBus.ServiceBroker\CWServiceBus.ServiceBroker.csproj">
+      <Project>{A476F8AF-5141-475F-8FFD-9876AA74B492}</Project>
+      <Name>CWServiceBus.ServiceBroker</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CWServiceBus.StructureMap\CWServiceBus.StructureMap.csproj">
+      <Project>{0596F84B-5850-4139-8A44-1EDF87598361}</Project>
+      <Name>CWServiceBus.StructureMap</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
