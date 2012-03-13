@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using log4net;
 
 namespace CWServiceBus.Dispatch {
@@ -29,9 +30,12 @@ namespace CWServiceBus.Dispatch {
                     }
                 }
             } catch (Exception e) {
-                Logger.Warn("Failed Dispatching Messages for message with ID=" + messageContext.MessageId, e);
                 exception = e;
-                OnDispatchException(childServiceLocator, messages, messageContext, e);
+                if (exception is TargetInvocationException && exception.InnerException != null) {
+                    exception = e.InnerException;
+                }
+                Logger.Warn("Failed Dispatching Messages for message with ID=" + messageContext.MessageId, exception);
+                OnDispatchException(childServiceLocator, messages, messageContext, exception);
                 throw;
             } finally {
                 OnDispatched(childServiceLocator, messages, messageContext, exception);
