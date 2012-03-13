@@ -117,28 +117,28 @@ namespace CWServiceBus.Unicast {
             throw new NotImplementedException();
         }
 
-        void IMessageBus.Send(params object[] messages) {
+        void ISendOnlyMessageBus.Send(params object[] messages) {
             var destination = GetDestinationServiceForMessages(messages);
             SendMessage(destination, null, MessageIntentEnum.Send, messages);
         }
 
-        void IMessageBus.Send<T>(Action<T> messageConstructor) {
+        void ISendOnlyMessageBus.Send<T>(Action<T> messageConstructor) {
             ((IMessageBus)this).Send(CreateInstance(messageConstructor));
         }
 
-        void IMessageBus.Send(string destinationService, params object[] messages) {
+        void ISendOnlyMessageBus.Send(string destinationService, params object[] messages) {
             SendMessage(destinationService, null, MessageIntentEnum.Send, messages);
         }
 
-        void IMessageBus.Send<T>(string destinationService, Action<T> messageConstructor) {
+        void ISendOnlyMessageBus.Send<T>(string destinationService, Action<T> messageConstructor) {
             SendMessage(destinationService, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
-        void IMessageBus.Send(string destinationService, Guid correlationId, params object[] messages) {
+        void ISendOnlyMessageBus.Send(string destinationService, Guid correlationId, params object[] messages) {
             SendMessage(destinationService, correlationId, MessageIntentEnum.Send, messages);
         }
 
-        void IMessageBus.Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor) {
+        void ISendOnlyMessageBus.Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor) {
             SendMessage(destinationService, correlationId, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
