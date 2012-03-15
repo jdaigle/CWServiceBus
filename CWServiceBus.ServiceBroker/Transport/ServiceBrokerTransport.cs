@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using CWServiceBus.Transport;
 using log4net;
+using System.Reflection;
 
 namespace CWServiceBus.ServiceBroker.Transport {
     public class ServiceBrokerTransport : ITransport {
@@ -277,9 +278,10 @@ namespace CWServiceBus.ServiceBroker.Transport {
                 return;
             } catch (Exception e) {
                 var originalException = e;
-                if (e is TransportMessageHandlingFailedException)
+                if (originalException is TransportMessageHandlingFailedException)
                     originalException = ((TransportMessageHandlingFailedException)e).OriginalException;
                 OnFailedMessageProcessing(originalException);
+                throw;
             }
         }
 
@@ -374,7 +376,6 @@ namespace CWServiceBus.ServiceBroker.Transport {
                     TransportMessageReceived(this, new TransportMessageReceivedEventArgs(msg));
             } catch (Exception e) {
                 Logger.Warn("Failed raising 'transport message received' event for message with ID=" + msg.Id, e);
-
                 return e;
             }
 

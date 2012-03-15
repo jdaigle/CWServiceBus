@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using CWServiceBus.Transport;
 using log4net;
@@ -190,12 +191,19 @@ namespace CWServiceBus.Unicast {
                 if (HandleControlMessage())
                     return;
             }
-            if (e.Message.MessageIntent == MessageIntentEnum.Send ||
-                e.Message.MessageIntent == MessageIntentEnum.Publish) {
-                using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
-                    childServiceLocator.RegisterComponent<IMessageBus>(this);
-                    this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
+            try {
+                if (e.Message.MessageIntent == MessageIntentEnum.Send ||
+                    e.Message.MessageIntent == MessageIntentEnum.Publish) {
+                    using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator()) {
+                        childServiceLocator.RegisterComponent<IMessageBus>(this);
+                        this.messageDispatcher.DispatchMessages(childServiceLocator, e.Message.Body, CurrentMessageContext);
+                    }
                 }
+            } catch (Exception ex) {
+                var orignalException = ex;
+                if (orignalException is TargetInvocationException)
+                    orignalException = ex.InnerException;
+                throw new TransportMessageHandlingFailedException(orignalException);
             }
         }
 
