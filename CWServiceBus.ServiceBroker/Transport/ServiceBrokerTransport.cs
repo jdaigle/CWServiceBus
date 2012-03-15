@@ -236,6 +236,53 @@ namespace CWServiceBus.ServiceBroker.Transport {
                 throw exceptionFromMessageModules;
         }
 
+        /// <summary>
+        /// This is a special helper method which will cause the transport to receive messages as if they came off the bus
+        /// </summary>
+        public void ReceiveMessages(object[] messages, IEnumerable<HeaderInfo> headers) {
+            needToAbort = false;
+            messageId = string.Empty;
+            try {
+                TransactionWrapper.RunInTransaction(transaction => {
+
+                    var transportMessage = new TransportMessage() {
+                        Id = Guid.NewGuid().ToString(),
+                        IdForCorrelation = Guid.NewGuid().ToString(),
+                        Body = messages,
+                        TimeSent = DateTime.UtcNow,
+                        MessageIntent = MessageIntentEnum.Send,
+                        Headers = headers.ToList(),
+                    };
+
+                    //care about failures here
+                    var exceptionFromMessageHandling = OnTransportMessageReceived(transportMessage);
+
+                    //and here
+                    var exceptionFromMessageModules = OnFinishedMessageProcessing();
+
+                    //but need to abort takes precedence - failures aren't counted here,
+                    //so messages aren't moved to the error queue.
+                    if (needToAbort)
+                        throw new AbortHandlingCurrentMessageException();
+
+                    if (exceptionFromMessageHandling != null) //cause rollback
+                        throw exceptionFromMessageHandling;
+
+                    if (exceptionFromMessageModules != null) //cause rollback
+                        throw exceptionFromMessageModules;
+                });
+            } catch (AbortHandlingCurrentMessageException) {
+                //in case AbortHandlingCurrentMessage was called
+                //don't increment failures, we want this message kept around.
+                return;
+            } catch (Exception e) {
+                var originalException = e;
+                if (e is TransportMessageHandlingFailedException)
+                    originalException = ((TransportMessageHandlingFailedException)e).OriginalException;
+                OnFailedMessageProcessing(originalException);
+            }
+        }
+
         private bool HandledMaxRetries(TransportMessage message, out Exception lastException) {
             string messageId = message.Id;
             failuresPerMessageLocker.EnterReadLock();
