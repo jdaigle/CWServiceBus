@@ -93,6 +93,19 @@ namespace CWServiceBus.Dispatch {
             orderedMessageHandlerList = firstOrderedHandlers.Concat(allOtherHandlers).ToList();
         }
 
+        public void ExecuteTheseHandlersLast(params Type[] handlerTypes) {
+            AssertInit();
+            var lastOrderedHandlers = new HashSet<Type>();
+            foreach (var handler in handlerTypes) {
+                var lastOrderedHandler = orderedMessageHandlerList.FirstOrDefault(x => handler.IsAssignableFrom(x));
+                if (lastOrderedHandlers != null && !lastOrderedHandlers.Contains(lastOrderedHandler)) {
+                    lastOrderedHandlers.Add(lastOrderedHandler);
+                }
+            }
+            var allOtherHandlers = orderedMessageHandlerList.Except(lastOrderedHandlers).ToList();
+            orderedMessageHandlerList = allOtherHandlers.Concat(lastOrderedHandlers).ToList();
+        }
+
         public void AddAssembliesToScan(IEnumerable<Assembly> messageHandlerAssemblies) {
             AssertNotInit();
             foreach (var assembly in messageHandlerAssemblies) {

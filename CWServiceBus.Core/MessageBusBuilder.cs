@@ -39,6 +39,10 @@ namespace CWServiceBus {
             var messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
             messageHandlers.AddAssembliesToScan(assembliesToScan);
             messageHandlers.Init();
+            if (executeTheseHandlersFirst.Any())
+                messageHandlers.ExecuteTheseHandlersFirst(executeTheseHandlersFirst);
+            if (executeTheseHandlersLast.Any())
+                messageHandlers.ExecuteTheseHandlersLast(executeTheseHandlersLast);
 
             // Get endpoint mapping
             foreach (MessageEndpointMapping mapping in this.MessageEndpointMappingCollection) {
@@ -84,6 +88,16 @@ namespace CWServiceBus {
 
         public void AddAssemblyToScan(Assembly assembly) {
             AddAssembliesToScan(new[] { assembly });
+        }
+
+        private Type[] executeTheseHandlersFirst = new Type[0];
+        public void ExecuteTheseHandlersFirst(params Type[] handlerTypes) {
+            this.executeTheseHandlersFirst = handlerTypes;
+        }
+
+        private Type[] executeTheseHandlersLast = new Type[0];
+        public void ExecuteTheseHandlersLast(params Type[] handlerTypes) {
+            this.executeTheseHandlersLast = handlerTypes;
         }
 
         private readonly IDictionary<Type, string> typesToEndpoints = new Dictionary<Type, string>();

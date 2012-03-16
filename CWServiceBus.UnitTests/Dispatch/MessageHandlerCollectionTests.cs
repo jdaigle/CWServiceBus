@@ -62,12 +62,21 @@ namespace CWServiceBus.Dispatch {
         }
 
         [Test]
-        public void Can_Order_Handlers() {
+        public void Can_Order_Handlers_First() {
             messageHandlerCollection.ExecuteTheseHandlersFirst(typeof(MessageHandler3));
             Assert.AreEqual(typeof(MessageHandler3), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).First().InstanceType);
 
             messageHandlerCollection.ExecuteTheseHandlersFirst(typeof(MessageHandler1));
             Assert.AreEqual(typeof(MessageHandler1), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).First().InstanceType);
+        }
+
+        [Test]
+        public void Can_Order_Handlers_Last() {
+            messageHandlerCollection.ExecuteTheseHandlersLast(typeof(MessageHandler3));
+            Assert.AreEqual(typeof(MessageHandler3), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).Last().InstanceType);
+
+            messageHandlerCollection.ExecuteTheseHandlersLast(typeof(MessageHandler1));
+            Assert.AreEqual(typeof(MessageHandler1), messageHandlerCollection.GetOrderedDispatchInfoFor(typeof(MessageWithInterface)).Last().InstanceType);
         }
     }
 }
