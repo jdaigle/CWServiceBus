@@ -15,6 +15,7 @@ namespace CWServiceBus.Unicast {
         private IMessageMapper messageMapper;
         private ISubscriptionStorage subscriptionStorage;
         private ITransport transport;
+        private IList<ITransport> additionalListeners = new List<ITransport>();
         private IMessageDispatcher messageDispatcher;
 
         public UnicastMessageBus() { }
@@ -36,6 +37,15 @@ namespace CWServiceBus.Unicast {
                 if (transport != null) {
                     transport.TransportMessageReceived += Transport_TransportMessageReceived;
                 }
+            }
+        }
+
+        public void AddAdditionalITransport(ITransport transport)
+        {
+            if (transport != null)
+            {
+                additionalListeners.Add(transport);
+                transport.TransportMessageReceived += Transport_TransportMessageReceived;
             }
         }
 
@@ -324,6 +334,10 @@ namespace CWServiceBus.Unicast {
 
         public void Start() {
             transport.Start();
+            foreach (var additionalListener in additionalListeners)
+            {
+                additionalListener.Start();
+            }
         }
     }
 }
