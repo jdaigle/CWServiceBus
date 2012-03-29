@@ -39,7 +39,8 @@ namespace CWServiceBus.ServiceBroker.Transport {
 
         public ServiceBrokerTransport() { }
 
-        public ServiceBrokerTransport(string listenerQueue, string returnAddress, SqlServerTransactionWrapper transactionWrapper, ITransportMessageSerializer transportMessageSerializer, int initialNumberOfWorkThreads = 1) {
+        public ServiceBrokerTransport(string listenerQueue, string returnAddress, ISqlServerTransactionWrapper transactionWrapper, ITransportMessageSerializer transportMessageSerializer, int initialNumberOfWorkThreads = 1)
+        {
             this.ListenerQueue = listenerQueue;
             this.ReturnAddress = returnAddress;
             this.TransactionWrapper = transactionWrapper;
