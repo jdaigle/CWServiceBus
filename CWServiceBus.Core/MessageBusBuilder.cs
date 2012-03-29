@@ -48,7 +48,8 @@ namespace CWServiceBus {
             foreach (MessageEndpointMapping mapping in this.MessageEndpointMappingCollection) {
                 try {
                     var messageType = Type.GetType(mapping.Messages, false);
-                    if (messageType != null) {
+                    if (messageType != null && MessageTypeConventions.IsMessageType(messageType))
+                    {
                         typesToEndpoints[messageType] = mapping.Endpoint.Trim();
                         continue;
                     }
@@ -58,7 +59,7 @@ namespace CWServiceBus {
 
                 try {
                     var a = Assembly.Load(mapping.Messages);
-                    foreach (var t in a.GetTypes())
+                    foreach (var t in a.GetTypes().Where(t => MessageTypeConventions.IsMessageType(t)))
                         typesToEndpoints[t] = mapping.Endpoint.Trim();
                 } catch (Exception ex) {
                     throw new ArgumentException("Problem loading message assembly: " + mapping.Messages, ex);
