@@ -101,6 +101,20 @@ namespace CWServiceBus {
             this.executeTheseHandlersLast = handlerTypes;
         }
 
+        /// <summary>
+        /// Maps all messages from an assembly, or a single message type to a particular endpoint for sending.
+        /// </summary>
+        /// <param name="message">A string defining the message assembly, or single message type.</param>
+        /// <param name="endpoint">The endpoint named</param>
+        public void MapMessageEndpoint(string message, string endpoint)
+        {
+            this.MessageEndpointMappingCollection.Add(new MessageEndpointMapping()
+            {
+                Messages = message,
+                Endpoint = endpoint,
+            });
+        }
+
         private readonly IDictionary<Type, string> typesToEndpoints = new Dictionary<Type, string>();
         public MessageEndpointMappingCollection MessageEndpointMappingCollection { get; private set; }
         public IServiceLocator ServiceLocator { get; set; }
