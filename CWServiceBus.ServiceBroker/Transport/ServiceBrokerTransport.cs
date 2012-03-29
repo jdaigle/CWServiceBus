@@ -371,14 +371,19 @@ namespace CWServiceBus.ServiceBroker.Transport {
         }
 
         private Exception OnTransportMessageReceived(TransportMessage msg) {
-            try {
+            try
+            {
                 if (TransportMessageReceived != null)
                     TransportMessageReceived(this, new TransportMessageReceivedEventArgs(msg));
-            } catch (Exception e) {
-                Logger.Warn("Failed raising 'transport message received' event for message with ID=" + msg.Id, e);
+            }
+            catch (Exception e)
+            {
+                var originalException = e;
+                if (e is TransportMessageHandlingFailedException)
+                    originalException = ((TransportMessageHandlingFailedException)e).OriginalException;
+                Logger.Warn("Failed raising 'transport message received' event for message with ID=" + msg.Id, originalException);
                 return e;
             }
-
             return null;
         }
 
