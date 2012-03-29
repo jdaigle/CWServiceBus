@@ -26,6 +26,7 @@ namespace CWServiceBus.Dispatch {
                     var messageType = message.GetType();
                     foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType)) {
                         var handler = childServiceLocator.Get(messageHandlerDispatchInfo.InstanceType);
+                        Logger.DebugFormat("Dispatching message {0} to handler {1}", messageType, handler);
                         messageHandlerDispatchInfo.Invoke(handler, message);
                     }
                 }

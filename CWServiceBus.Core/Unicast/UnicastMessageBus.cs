@@ -187,6 +187,7 @@ namespace CWServiceBus.Unicast {
         private void Transport_TransportMessageReceived(object sender, TransportMessageReceivedEventArgs e) {
             this.OutgoingHeaders.Clear();
             _messageBeingHandled = e.Message;
+            Logger.Debug("Received transport message with ID " + e.Message.Id + " from sender " + e.Message.ReturnAddress);
             if (e.Message.Body.Any(x => x is ControlMessage)) {
                 if (HandleControlMessage())
                     return;
@@ -205,6 +206,7 @@ namespace CWServiceBus.Unicast {
                     orignalException = ex.InnerException;
                 throw new TransportMessageHandlingFailedException(orignalException);
             }
+            Logger.Debug("Finished handling message.");
         }
 
         private bool HandleControlMessage() {
