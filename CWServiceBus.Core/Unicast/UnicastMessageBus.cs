@@ -332,11 +332,20 @@ namespace CWServiceBus.Unicast {
             return destination;
         }
 
+        private bool hasStarted;
+        private object startLock = new object();
+
         public void Start() {
-            transport.Start();
-            foreach (var additionalListener in additionalListeners)
+            if (hasStarted) return;
+            lock (startLock)
             {
-                additionalListener.Start();
+                if (hasStarted) return;
+                transport.Start();
+                foreach (var additionalListener in additionalListeners)
+                {
+                    additionalListener.Start();
+                }
+                hasStarted = true;
             }
         }
     }

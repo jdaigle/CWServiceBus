@@ -78,10 +78,19 @@ namespace CWServiceBus.ServiceBroker.Transport {
             }
         }
 
+        private bool hasStarted;
+        private object startLock = new object();
+
         void ITransport.Start() {
-            InitServiceBroker();
-            for (int i = 0; i < numberOfWorkerThreads; i++)
-                AddWorkerThread().Start();
+            if (hasStarted) return;
+            lock (startLock)
+            {
+                if (hasStarted) return;
+                InitServiceBroker();
+                for (int i = 0; i < numberOfWorkerThreads; i++)
+                    AddWorkerThread().Start();
+                hasStarted = true;
+            }
         }
 
         private void InitServiceBroker() {
