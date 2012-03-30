@@ -52,7 +52,7 @@ task :tests => ["init", "compile"] do
 end
 
 task :build => ["init", "compile", "tests"]
-
+task :default => ["build"]
 
 def doTest(asm)
   nunit = NUnitTestRunner.new
