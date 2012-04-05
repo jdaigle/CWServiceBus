@@ -6,7 +6,7 @@ namespace CWServiceBus.Diagnostics
 {
     public class PerformanceCounters : IDisposable
     {
-        public static ILog logger = LogManager.GetLogger("CWServiceBus.Diagnostics");
+        private static ILog logger = LogManager.GetLogger("CWServiceBus.Diagnostics");
 
         public const string CategoryName = "CWServiceBus";
         public const string TotalMessagesReceived = "Total Messages Received";

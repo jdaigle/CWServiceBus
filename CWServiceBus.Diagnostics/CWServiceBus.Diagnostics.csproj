@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Options.cs" />
     <Compile Include="PerformanceCounters.cs" />
+    <Compile Include="PerformanceSampler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

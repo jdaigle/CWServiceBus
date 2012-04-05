@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <style type="text/css">
+        body {
+            background-color: #333333;
+        }
+        canvas.chart {
+        	display: block;
+        	margin-bottom: 20px;
+        }
+        label.forChart {
+        	color: White;
+        	font-weight: bold;
+        }
+    </style>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="@Url.Content("~/Scripts/smoothie.js")"></script>
+    <script type="text/javascript">    
+        var __cwservicebus_samples_fullduplex_server_TimeSeries = new TimeSeries();
+        var __cwservicebus_samples_fullduplex_client_TimeSeries = new TimeSeries();
+
+        function getTimeSeries(sampleName){
+            if (sampleName == "[__cwservicebus_samples_fullduplex_server]"){
+                return __cwservicebus_samples_fullduplex_server_TimeSeries
+            }
+            if (sampleName == "[__cwservicebus_samples_fullduplex_client]"){
+                return __cwservicebus_samples_fullduplex_client_TimeSeries
+            }
+        }
+
+        function getSample() {
+            $.getJSON("@Url.Action("Sample", "Home")", null, function (samples) {
+                for (var i = 0; i < samples.length; i++) {
+                    getTimeSeries(samples[i].name).append(new Date().getTime(), samples[i].receivedRate)
+                }
+            })
+        }
+
+        function setupChart(timeSeries, canvasId){
+            var chart = new SmoothieChart()
+            chart.addTimeSeries(timeSeries, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 })
+            chart.streamTo(document.getElementById(canvasId), 1000)
+        }
+
+        $(function () {
+            setInterval(getSample, 1000)
+            setupChart(__cwservicebus_samples_fullduplex_server_TimeSeries, "__cwservicebus_samples_fullduplex_server")
+            setupChart(__cwservicebus_samples_fullduplex_client_TimeSeries, "__cwservicebus_samples_fullduplex_client")
+        })
+    </script>
+  </head>
+  <body>
+    <label class="forChart">__cwservicebus_samples_fullduplex_server (Messages Received / Sec)</label>
+    <canvas id="__cwservicebus_samples_fullduplex_server" width="300" height="150" class="chart"></canvas>
+    <label class="forChart">__cwservicebus_samples_fullduplex_client (Messages Received / Sec)</label>
+    <canvas id="__cwservicebus_samples_fullduplex_client" width="300" height="150" class="chart"></canvas>
+  </body>
+</html>
