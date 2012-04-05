@@ -73,6 +73,7 @@
     <Compile Include="Transport\TransportMessageReceivedEventArgs.cs" />
     <Compile Include="IStartableMessageBus.cs" />
     <Compile Include="Unicast\InMemorySubscriptionStorage.cs" />
+    <Compile Include="Unicast\MessageHandledEventArgs.cs" />
     <Compile Include="Unicast\MessageType.cs" />
     <Compile Include="Transport\TransportMessage.cs" />
     <Compile Include="Unicast\ISubscriptionStorage.cs" />
@@ -81,6 +82,10 @@
     <Compile Include="WorkerThread.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CWServiceBus.Diagnostics\CWServiceBus.Diagnostics.csproj">
+      <Project>{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}</Project>
+      <Name>CWServiceBus.Diagnostics</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
       <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
       <Name>CWServiceBus.Interfaces</Name>

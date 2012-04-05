@@ -31,9 +31,10 @@ namespace MyClient {
                 builder.UseServiceBrokerTransport(t => {
                     t.ListenerQueue = "CWServiceBus_Samples_FullDuplex_Client";
                     t.ReturnAddress = "[//CWServiceBus/Samples/FullDuplex/Client]";
-                    t.NumberOfWorkerThreads = 1;
+                    t.NumberOfWorkerThreads = 3;
                     t.ServiceBrokerConnectionString = "Data Source=localhost;Initial Catalog=ServiceBus;Trusted_Connection=true";
                 });
+                builder.DiagnosticsPerfCountersEnabled = true;
             });
 
             ((IStartableMessageBus)messageBus).Start();

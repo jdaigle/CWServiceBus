@@ -31,6 +31,8 @@ namespace MyServer {
             MessageBus.SetHeader("2", "2");
 
             MessageBus.Reply(response);
+
+            Thread.Sleep(250);
         }
 
         public static ILog Logger = LogManager.GetLogger("MyServer");

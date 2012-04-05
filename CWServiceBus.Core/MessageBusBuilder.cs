@@ -8,6 +8,7 @@ using CWServiceBus.Reflection;
 using CWServiceBus.Serializers.XML;
 using CWServiceBus.Unicast;
 using log4net;
+using CWServiceBus.Diagnostics;
 
 namespace CWServiceBus {
     public class MessageBusBuilder {
@@ -72,8 +73,20 @@ namespace CWServiceBus {
             var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
             var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, SubscriptionStorage);
             messageBus.MapMessageTypesToAddress(typesToEndpoints);
+
+            if (DiagnosticsPerfCountersEnabled)
+            {
+                performanceCounters = new PerformanceCounters(TransportBuilder.EndpointName);
+                messageBus.MessageReceived += (o, e) => performanceCounters.OnMessageReceived();
+                messageBus.MessageSent += (o, e) => performanceCounters.OnMessageSent();
+                messageBus.MessageFailed += (o, e) => performanceCounters.OnMessageFailure();
+                messageBus.MessageHandled += (o, e) => performanceCounters.OnMessageHandled(e.ElapsedMilliseconds, e.ElapsedTicks);
+            }
+
             return messageBus;
         }
+
+        private PerformanceCounters performanceCounters;
 
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();
 
@@ -122,5 +135,6 @@ namespace CWServiceBus {
         public IMessageSerializer MessageSerializer { get; private set; }
         public ITransportBuilder TransportBuilder { get; set; }
         public ISubscriptionStorage SubscriptionStorage { get; set; }
+        public bool DiagnosticsPerfCountersEnabled { get; set; }
     }
 }

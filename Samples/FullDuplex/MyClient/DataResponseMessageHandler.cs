@@ -1,6 +1,7 @@
 ﻿using System;
 using CWServiceBus;
 using MyMessages;
+using System.Threading;
 
 namespace MyClient {
     class DataResponseMessageHandler : IMessageHandler<DataResponseMessage> {
@@ -15,6 +16,8 @@ namespace MyClient {
                 MessageBus.CurrentMessageContext.Headers["Test"],
                 MessageBus.CurrentMessageContext.Headers["1"],
                 MessageBus.CurrentMessageContext.Headers["2"]);
+
+            Thread.Sleep(250);
         }
     }
 }

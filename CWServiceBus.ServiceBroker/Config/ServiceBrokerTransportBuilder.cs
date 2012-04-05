@@ -41,5 +41,8 @@ namespace CWServiceBus.ServiceBroker.Config {
             transport.ForwardFaultsTo(faultForwardDestinations);
             return transport;
         }
+
+
+        public string EndpointName { get { return ReturnAddress; } }
     }
 }
