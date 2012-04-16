@@ -322,14 +322,21 @@ namespace CWServiceBus.Unicast
         }
 
         [ThreadStatic]
-        public Dictionary<string, string> outgoingHeaders = new Dictionary<string, string>();
+        private static Dictionary<string, string> outgoingHeaders;
         public IDictionary<string, string> OutgoingHeaders
         {
-            get { return outgoingHeaders; }
+            get
+            {
+                if (outgoingHeaders == null)
+                {
+                    outgoingHeaders = new Dictionary<string, string>();
+                }
+                return outgoingHeaders;
+            }
         }
 
         [ThreadStatic]
-        static TransportMessage _messageBeingHandled;
+        private static TransportMessage _messageBeingHandled;
         public IMessageContext CurrentMessageContext
         {
             get { return _messageBeingHandled != null ? new MessageContext(_messageBeingHandled) : null; }
