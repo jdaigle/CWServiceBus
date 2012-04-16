@@ -76,7 +76,7 @@ namespace CWServiceBus {
 
             if (DiagnosticsPerfCountersEnabled)
             {
-                performanceCounters = new PerformanceCounters(TransportBuilder.EndpointName);
+                var performanceCounters = new PerformanceCounters(TransportBuilder.EndpointName);
                 messageBus.MessageReceived += (o, e) => performanceCounters.OnMessageReceived();
                 messageBus.MessageSent += (o, e) => performanceCounters.OnMessageSent();
                 messageBus.MessageFailed += (o, e) => performanceCounters.OnMessageFailure();
@@ -85,8 +85,6 @@ namespace CWServiceBus {
 
             return messageBus;
         }
-
-        private PerformanceCounters performanceCounters;
 
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();
 
