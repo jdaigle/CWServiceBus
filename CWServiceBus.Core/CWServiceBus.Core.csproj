@@ -61,6 +61,9 @@
     <Compile Include="Serializers\XmlTransportMessageSerializer.cs" />
     <Compile Include="Serializers\XML\XmlMessageSerializer.cs" />
     <Compile Include="MessageBusBuilder.cs" />
+    <Compile Include="Unicast\Sql\ISubscriptionCacheProvider.cs" />
+    <Compile Include="Unicast\Sql\SqlCommandSet.cs" />
+    <Compile Include="Unicast\Sql\SqlServerSubscriptionStorage.cs" />
     <Compile Include="Transport\AbortHandlingCurrentMessageException.cs" />
     <Compile Include="Transport\TransportMessageFaultEventArgs.cs" />
     <Compile Include="Transport\FailedMessageProcessingEventArgs.cs" />

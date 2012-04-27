@@ -27,7 +27,10 @@ namespace MyPublisher {
                     t.NumberOfWorkerThreads = 1;
                     t.ServiceBrokerConnectionString = "Data Source=localhost;Initial Catalog=ServiceBus;Trusted_Connection=true";
                 });
-                builder.SubscriptionStorage = new InMemorySubscriptionStorage();
+                builder.SubscriptionStorage = new CWServiceBus.Unicast.Sql.SqlServerSubscriptionStorage()
+                {
+                    ConnectionString = "Data Source=localhost;Initial Catalog=ServiceBus;Trusted_Connection=true",
+                };
             });
 
             messageBus.Start();
