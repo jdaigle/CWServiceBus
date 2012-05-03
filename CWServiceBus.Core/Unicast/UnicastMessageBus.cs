@@ -85,6 +85,11 @@ namespace CWServiceBus.Unicast
                 .GetSubscriberServicesForMessage(fullTypes.Select(t => new MessageType(t)))
                 .ToList();
 
+            if (!subscribers.Any())
+            {
+                return;
+            }
+
             SendMessage(subscribers, null, MessageIntentEnum.Publish, messages as object[]);
         }
 
