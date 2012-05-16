@@ -29,7 +29,6 @@ namespace CWServiceBus.FastServiceLocator
                 }
                 instance = Activator.CreateInstance<T>();
             }
-            container.FillProperties(instance);
             return instance;
         }
 
@@ -49,7 +48,6 @@ namespace CWServiceBus.FastServiceLocator
                 }
                 instance = Activator.CreateInstance(type);
             }
-            container.FillProperties(instance);
             return instance;
         }
 

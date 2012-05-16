@@ -31,9 +31,9 @@ namespace CWServiceBus.Dispatch {
                         if (handler == null)
                         {
                             handler = Activator.CreateInstance(messageHandlerDispatchInfo.InstanceType);
-                            childServiceLocator.BuildUp(handler);
                             tryDisposeHandler = true;
                         }
+                        childServiceLocator.BuildUp(handler);
                         try
                         {
                             Logger.DebugFormat("Dispatching message {0} to handler {1}", messageType, handler);
