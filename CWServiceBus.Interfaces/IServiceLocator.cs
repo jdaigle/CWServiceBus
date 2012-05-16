@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CWServiceBus {
-    public interface IServiceLocator : IDisposable {
+namespace CWServiceBus
+{
+    public interface IServiceLocator : IDisposable
+    {
         void BuildUp(object target);
         T Get<T>();
         IEnumerable<T> GetAll<T>();

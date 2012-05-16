@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{0596F84B-5850-4139-8A44-1EDF87598361}</ProjectGuid>
+    <ProjectGuid>{9C3DD569-797D-4757-8C22-248D5C157F57}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CWServiceBus.StructureMap</RootNamespace>
-    <AssemblyName>CWServiceBus.StructureMap</AssemblyName>
+    <RootNamespace>CWServiceBus.FastServiceLocator</RootNamespace>
+    <AssemblyName>CWServiceBus.FastServiceLocator</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="StructureMap">
-      <HintPath>..\external-bin\StructureMap.dll</HintPath>
+    <Reference Include="log4net">
+      <HintPath>..\external-bin\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -43,8 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FastServiceLocatorImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StructureMapServiceLocator.cs" />
+    <Compile Include="FastContainer.cs" />
+    <Compile Include="FastContainerRegistration.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">

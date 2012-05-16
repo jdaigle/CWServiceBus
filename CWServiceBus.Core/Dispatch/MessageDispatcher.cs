@@ -24,10 +24,28 @@ namespace CWServiceBus.Dispatch {
                 OnDispatching(childServiceLocator, messages, messageContext);
                 foreach (var message in messages) {
                     var messageType = message.GetType();
-                    foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType)) {
+                    foreach (var messageHandlerDispatchInfo in messageHandlers.GetOrderedDispatchInfoFor(messageType))
+                    {
                         var handler = childServiceLocator.Get(messageHandlerDispatchInfo.InstanceType);
-                        Logger.DebugFormat("Dispatching message {0} to handler {1}", messageType, handler);
-                        messageHandlerDispatchInfo.Invoke(handler, message);
+                        var tryDisposeHandler = false;
+                        if (handler == null)
+                        {
+                            handler = Activator.CreateInstance(messageHandlerDispatchInfo.InstanceType);
+                            childServiceLocator.BuildUp(handler);
+                            tryDisposeHandler = true;
+                        }
+                        try
+                        {
+                            Logger.DebugFormat("Dispatching message {0} to handler {1}", messageType, handler);
+                            messageHandlerDispatchInfo.Invoke(handler, message);
+                        }
+                        finally
+                        {
+                            if (tryDisposeHandler && handler is IDisposable)
+                            {
+                                ((IDisposable)handler).Dispose();
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
