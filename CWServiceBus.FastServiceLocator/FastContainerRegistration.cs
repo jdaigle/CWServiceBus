@@ -19,7 +19,7 @@ namespace CWServiceBus.FastServiceLocator
 
         public FastContainerRegistration(Func<FastContainer, object> resolve)
         {
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Adding Wireup Callback");
             }
@@ -28,7 +28,7 @@ namespace CWServiceBus.FastServiceLocator
 
         public FastContainerRegistration(object instance)
         {
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Adding Wireup Instance for {0}", instance.GetType());
             }
@@ -38,7 +38,7 @@ namespace CWServiceBus.FastServiceLocator
         public virtual FastContainerRegistration InstancePerCall()
         {
             AssertNotDisposed();
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Configuring InstancePerCall");
             }
@@ -49,20 +49,20 @@ namespace CWServiceBus.FastServiceLocator
         public virtual object Resolve(FastContainer container)
         {
             AssertNotDisposed();
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Resolving Instance");
             }
             if (this.instancePerCall)
             {
-                if (Logger.IsDebugEnabled)
+                if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
                 {
                     Logger.DebugFormat("Building New Instance");
                 }
                 return this.resolve(container);
             }
 
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Attempting To Resolve Instance");
             }
@@ -70,7 +70,7 @@ namespace CWServiceBus.FastServiceLocator
             if (this.instance != null)
                 return this.instance;
 
-            if (Logger.IsDebugEnabled)
+            if (FastContainer.SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Building And Storing New Instance");
             }

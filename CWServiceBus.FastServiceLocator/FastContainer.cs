@@ -8,6 +8,7 @@ namespace CWServiceBus.FastServiceLocator
 {
     public class FastContainer : IDisposable
     {
+        public static bool SupperLogging = false;
         private static readonly ILog Logger = LogManager.GetLogger(typeof(FastContainer));
         private readonly IDictionary<Type, FastContainerRegistration> registrations = new Dictionary<Type, FastContainerRegistration>();
 
@@ -26,7 +27,7 @@ namespace CWServiceBus.FastServiceLocator
             where TService : class
         {
             AssertNotDisposed();
-            if (Logger.IsDebugEnabled)
+            if (SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Registering Wireup Callback for {0}", typeof(TService));
             }
@@ -50,7 +51,7 @@ namespace CWServiceBus.FastServiceLocator
             if (type.IsValueType && type.IsInterface)
                 throw new ArgumentException("Type Must Be Interface", "instance");
 
-            if (Logger.IsDebugEnabled)
+            if (SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Registering Service Instance {0}", type);
             }
@@ -68,7 +69,7 @@ namespace CWServiceBus.FastServiceLocator
         public virtual object Resolve(Type type)
         {
             AssertNotDisposed();
-            if (Logger.IsDebugEnabled)
+            if (SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Resolving Service {0}", type);
             }
@@ -77,7 +78,7 @@ namespace CWServiceBus.FastServiceLocator
             if (this.registrations.TryGetValue(type, out registration))
                 return registration.Resolve(this);
 
-            if (Logger.IsDebugEnabled)
+            if (SupperLogging && Logger.IsDebugEnabled)
             {
                 Logger.DebugFormat("Unable To Resolve {0}", type);
             }
