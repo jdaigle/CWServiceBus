@@ -66,6 +66,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reflection\When_mapping_interfaces.cs" />
     <Compile Include="Serializers\TransportMessageSerializerTests.cs" />
+    <Compile Include="Serializers\XML\EmptyStringSerializationTests.cs" />
     <Compile Include="Serializers\XML\IM1.cs" />
     <Compile Include="Serializers\XML\IM2.cs" />
     <Compile Include="Serializers\XML\M1.cs" />

@@ -11,11 +11,14 @@ using System.IO;
 using CWServiceBus.Transport;
 using System.Diagnostics;
 
-namespace CWServiceBus.Serializers {
+namespace CWServiceBus.Serializers
+{
     [TestFixture]
-    public class TransportMessageSerializerTests {
+    public class TransportMessageSerializerTests
+    {
         [Test]
-        public void Serialize_Deserialize_TransportMessage() {
+        public void Serialize_Deserialize_TransportMessage()
+        {
             var types = new List<Type> { typeof(C1), typeof(C2) };
             var mapper = new MessageMapper();
             mapper.Initialize(types);
@@ -47,10 +50,12 @@ namespace CWServiceBus.Serializers {
             Assert.AreNotSame(transportMessage, newTransportMessage);
         }
 
-        public static TransportMessage Execute(TransportMessage transportMessage, IMessageSerializer messageSerializer) {
+        public static TransportMessage Execute(TransportMessage transportMessage, IMessageSerializer messageSerializer)
+        {
             var serializer = new XmlTransportMessageSerializer(messageSerializer);
 
-            using (var stream = new MemoryStream()) {
+            using (var stream = new MemoryStream())
+            {
                 serializer.Serialize(transportMessage, stream);
                 Debug.WriteLine(Encoding.ASCII.GetString(stream.ToArray()));
                 stream.Position = 0;

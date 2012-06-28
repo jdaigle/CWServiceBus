@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using CWServiceBus.Transport;
@@ -18,6 +19,9 @@ namespace CWServiceBus.Serializers
                 if (xmlSerializerForSerialization == null)
                 {
                     var overrides = new XmlAttributeOverrides();
+                    var attrs = new XmlAttributes { XmlIgnore = true };
+
+                    overrides.Add(typeof(TransportMessage), "Messages", attrs);
                     xmlSerializerForSerialization = new XmlSerializer(typeof(TransportMessage), overrides);
                 }
                 return xmlSerializerForSerialization;
@@ -82,9 +86,13 @@ namespace CWServiceBus.Serializers
             messages.LoadXml(data.Data);
             using (var stream = new MemoryStream())
             {
-                messages.Save(stream);
-                stream.Position = 0;
-                return this.messageSerializer.Deserialize(stream);
+                using (var xmlWriter = new XmlTextWriter(stream, Encoding.UTF8))
+                {
+                    xmlWriter.Formatting = Formatting.None;
+                    messages.Save(xmlWriter);
+                    stream.Position = 0;
+                    return this.messageSerializer.Deserialize(stream);
+                }
             }
         }
     }
