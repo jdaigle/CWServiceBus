@@ -5,6 +5,6 @@ namespace CWServiceBus.Transport
     public interface ITransportMessageSerializer
     {
         void Serialize(TransportMessage transportMessage, Stream outputStream);
-        TransportMessage Deserialize(Stream inputStream);
+        TransportMessage Deserialize(Stream inputStream, bool deserializeBody = true);
     }
 }

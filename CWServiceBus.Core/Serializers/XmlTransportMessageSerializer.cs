@@ -66,16 +66,20 @@ namespace CWServiceBus.Serializers
             outputStream.Position = 0;
         }
 
-        public TransportMessage Deserialize(Stream inputStream)
+        public TransportMessage Deserialize(Stream inputStream, bool deserializeBody)
         {
-            var transportMessage = (TransportMessage)xmlSerializerForDeserialization.Deserialize(inputStream);
             inputStream.Position = 0;
+            var transportMessage = (TransportMessage)xmlSerializerForDeserialization.Deserialize(inputStream);
 
-            var bodyDoc = new XmlDocument();
-            bodyDoc.Load(inputStream);
+            if (deserializeBody)
+            {
+                inputStream.Position = 0;
+                var bodyDoc = new XmlDocument();
+                bodyDoc.Load(inputStream);
 
-            var payLoad = bodyDoc.DocumentElement.SelectSingleNode("Body").FirstChild as XmlCDataSection;
-            transportMessage.Body = ExtractMessages(payLoad);
+                var payLoad = bodyDoc.DocumentElement.SelectSingleNode("Body").FirstChild as XmlCDataSection;
+                transportMessage.Body = ExtractMessages(payLoad);
+            }
 
             return transportMessage;
         }

@@ -168,7 +168,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
 
                     TransportMessage transportMessage = null;
                     try {
-                        transportMessage = TransportMessageSerializer.Deserialize(message.BodyStream);
+                        transportMessage = TransportMessageSerializer.Deserialize(message.BodyStream, true);
                     } catch (Exception ex) {
                         Logger.Error("Could not extract message data.", ex);
                         OnSerializationFailed(conversationHandle, message, ex);
@@ -193,10 +193,19 @@ namespace CWServiceBus.ServiceBroker.Transport {
 
         private void OnSerializationFailed(Guid conversationHandle, Message underlyingTransportObject, Exception exception) {
             try {
-                this.WriteFailedMessage(conversationHandle, underlyingTransportObject, null, exception, 3);
+                TransportMessage transportMessage = null;
+                try
+                {
+                    transportMessage = TransportMessageSerializer.Deserialize(underlyingTransportObject.BodyStream, false);
+                }
+                catch (Exception)
+                {
+                    // Eat this exception
+                }
+                this.WriteFailedMessage(conversationHandle, underlyingTransportObject, transportMessage, exception, 3);
                 if (MessageFault != null)
-                    MessageFault(this, new TransportMessageFaultEventArgs(null, exception, "SerializationFailed"));
-                SendFailureMessage(null, exception, "SerializationFailed");
+                    MessageFault(this, new TransportMessageFaultEventArgs(transportMessage, exception, "SerializationFailed"));
+                SendFailureMessage(transportMessage, exception, "SerializationFailed");
             } catch (Exception e) {
                 Logger.FatalFormat("Fault manager failed to process the failed message {0}", e, underlyingTransportObject);
                 // TODO critical error will stop the transport from handling new messages
