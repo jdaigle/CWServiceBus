@@ -55,7 +55,7 @@ namespace CWServiceBus.ServiceBroker.Utils
                 {
                     while (reader.Read())
                     {
-                        yield return new QueueCount() { Name = reader.GetString(0), Count = reader.GetInt32(1) };
+                        yield return new QueueCount() { Name = reader.GetString(0), Count = (int)reader.GetInt64(1) };
                     }
                 }
             }
@@ -172,7 +172,7 @@ namespace CWServiceBus.ServiceBroker.Utils
                                 QueueService = reader.GetString(3),
                                 OriginService = reader.GetString(4),
                             },
-                            UTF8EncodedMessage = reader.GetSqlBytes(5).Buffer,
+                            Message = reader.GetString(5) ?? string.Empty,
                             ExceptionMessage = reader.GetString(6) ?? string.Empty,
                         };
                         return message;
@@ -281,8 +281,9 @@ SELECT * FROM
 	QueueService,
 	OriginService,
 	ROW_NUMBER() OVER (ORDER BY InsertDateTime {0}) as RowNumber
-	FROM FailedMessage WITH (NOLOCK)) _
-WHERE RowNumber BETWEEN @first AND @last AND QueueName = @queue;
+	FROM FailedMessage WITH (NOLOCK)
+    WHERE QueueName = @queue) _
+WHERE RowNumber BETWEEN @first AND @last;
 ";
 
         private static readonly string Query_PosionMessage = @"
@@ -292,7 +293,7 @@ SELECT
 	QueueName,
 	QueueService,
 	OriginService,
-	MessageData,
+	CAST(CAST(MessageData AS VARBINARY(MAX)) AS VARCHAR(MAX)) AS MessageData,
 	ErrorMessage
 FROM FailedMessage WITH (NOLOCK)
 WHERE MessageId = @messageId;
