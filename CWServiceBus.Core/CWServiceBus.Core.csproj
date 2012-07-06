@@ -50,6 +50,9 @@
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageDispatcher.cs" />
     <Compile Include="Dispatch\MessageHandlerCollection.cs" />
+    <Compile Include="FastServiceLocator\FastContainer.cs" />
+    <Compile Include="FastServiceLocator\FastContainerRegistration.cs" />
+    <Compile Include="FastServiceLocator\FastServiceLocatorImpl.cs" />
     <Compile Include="IMessageMapper.cs" />
     <Compile Include="Config\MessageEndpointMapping.cs" />
     <Compile Include="Config\MessageEndpointMappingCollection.cs" />

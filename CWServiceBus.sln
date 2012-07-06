@@ -13,8 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.StructureMap",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Diagnostics", "CWServiceBus.Diagnostics\CWServiceBus.Diagnostics.csproj", "{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.FastServiceLocator", "CWServiceBus.FastServiceLocator\CWServiceBus.FastServiceLocator.csproj", "{9C3DD569-797D-4757-8C22-248D5C157F57}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.ServiceBroker.Utils", "CWServiceBus.ServiceBroker.Utils\CWServiceBus.ServiceBroker.Utils.csproj", "{ABB1CA61-8448-49D6-A179-E201A882AEE8}"
 EndProject
 Global
@@ -47,10 +45,6 @@ Global
 		{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9C3DD569-797D-4757-8C22-248D5C157F57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9C3DD569-797D-4757-8C22-248D5C157F57}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9C3DD569-797D-4757-8C22-248D5C157F57}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9C3DD569-797D-4757-8C22-248D5C157F57}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ABB1CA61-8448-49D6-A179-E201A882AEE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ABB1CA61-8448-49D6-A179-E201A882AEE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABB1CA61-8448-49D6-A179-E201A882AEE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
