@@ -12,6 +12,7 @@ namespace CWServiceBus.Dispatch {
         private bool isInit;
         private ISet<Assembly> assembliesToScan = new HashSet<Assembly>();
         private ISet<Type> additionalMessageHandlerTypes = new HashSet<Type>();
+        private IList<Func<Type, bool>> messageHandlerInclusionFilters = new List<Func<Type, bool>>();
         private MessageTypeConventions messageTypeConventions;
 
         /// <summary>
@@ -62,6 +63,7 @@ namespace CWServiceBus.Dispatch {
             var messageHandlerTypes =
                 FindAllMessageHandlerTypes(assembliesToScan)
                 .Concat(FindAllMessageHandlerTypes(additionalMessageHandlerTypes))
+                .Where(type => messageHandlerInclusionFilters.All(filter => filter(type)))
                 .Distinct().ToList();
 
             foreach (Type messageHandlerType in messageHandlerTypes) {
@@ -138,6 +140,11 @@ namespace CWServiceBus.Dispatch {
         public void AddAdditonalMessageHandlerType(Type messageHandlerType) {
             AssertNotInit();
             AddAdditonalMessageHandlerTypes(new[] { messageHandlerType });
+        }
+
+        public void OnlyAddMessageHandlersThatMatchThePredicate(Func<Type, bool> filter)
+        {
+            this.messageHandlerInclusionFilters.Add(filter);
         }
 
         public IEnumerable<Type> AllMessageTypes() {

@@ -59,7 +59,7 @@ namespace CWServiceBus.Serializers
                 serializer.Serialize(transportMessage, stream);
                 Debug.WriteLine(Encoding.ASCII.GetString(stream.ToArray()));
                 stream.Position = 0;
-                return serializer.Deserialize(stream);
+                return serializer.Deserialize(stream, true);
             }
         }
     }

@@ -23,6 +23,7 @@ namespace CWServiceBus {
 
         public MessageBusBuilder() {
             this.MessageTypeConventions = new MessageTypeConventions();
+            this.MessageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
             this.MessageEndpointMappingCollection = new MessageEndpointMappingCollection();
             AddAssemblyToScan(Assembly.Load("CWServiceBus.Core"));
         }
@@ -37,13 +38,12 @@ namespace CWServiceBus {
             MessageSerializer = new XmlMessageSerializer(messageMapper);
             (MessageSerializer as XmlMessageSerializer).Initialize(messageTypes);
 
-            var messageHandlers = new MessageHandlerCollection(this.MessageTypeConventions);
-            messageHandlers.AddAssembliesToScan(assembliesToScan);
-            messageHandlers.Init();
+            this.MessageHandlers.AddAssembliesToScan(assembliesToScan);
+            this.MessageHandlers.Init();
             if (executeTheseHandlersFirst.Any())
-                messageHandlers.ExecuteTheseHandlersFirst(executeTheseHandlersFirst);
+                this.MessageHandlers.ExecuteTheseHandlersFirst(executeTheseHandlersFirst);
             if (executeTheseHandlersLast.Any())
-                messageHandlers.ExecuteTheseHandlersLast(executeTheseHandlersLast);
+                this.MessageHandlers.ExecuteTheseHandlersLast(executeTheseHandlersLast);
 
             // Get endpoint mapping
             foreach (MessageEndpointMapping mapping in this.MessageEndpointMappingCollection) {
@@ -70,7 +70,7 @@ namespace CWServiceBus {
 
             var transport = TransportBuilder.Build();
 
-            var messageDispatcher = new MessageDispatcher(ServiceLocator, messageHandlers);
+            var messageDispatcher = new MessageDispatcher(ServiceLocator, this.MessageHandlers);
             var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, SubscriptionStorage);
             messageBus.MapMessageTypesToAddress(typesToEndpoints);
 
@@ -130,6 +130,7 @@ namespace CWServiceBus {
         public MessageEndpointMappingCollection MessageEndpointMappingCollection { get; private set; }
         public IServiceLocator ServiceLocator { get; set; }
         public MessageTypeConventions MessageTypeConventions { get; private set; }
+        public MessageHandlerCollection MessageHandlers { get; private set; }
         public IMessageSerializer MessageSerializer { get; private set; }
         public ITransportBuilder TransportBuilder { get; set; }
         public ISubscriptionStorage SubscriptionStorage { get; set; }
