@@ -181,14 +181,14 @@ namespace CWServiceBus.Unicast
             SendMessage(destinationService, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
-        void ISendOnlyMessageBus.Send(string destinationService, Guid correlationId, params object[] messages)
+        void ISendOnlyMessageBus.Send(IEnumerable<string> destinations, params object[] messages)
         {
-            SendMessage(destinationService, correlationId, MessageIntentEnum.Send, messages);
+            SendMessage(destinations, null, MessageIntentEnum.Send, messages);
         }
 
-        void ISendOnlyMessageBus.Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor)
+        void ISendOnlyMessageBus.Send<T>(IEnumerable<string> destinations, Action<T> messageConstructor)
         {
-            SendMessage(destinationService, correlationId, MessageIntentEnum.Send, CreateInstance(messageConstructor));
+            SendMessage(destinations, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
         public void Reply(params object[] messages)

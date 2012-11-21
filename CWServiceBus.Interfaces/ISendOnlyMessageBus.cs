@@ -7,8 +7,8 @@ namespace CWServiceBus {
         void Send<T>(Action<T> messageConstructor);
         void Send(string destinationService, params object[] messages);
         void Send<T>(string destinationService, Action<T> messageConstructor);
-        void Send(string destinationService, Guid correlationId, params object[] messages);
-        void Send<T>(string destinationService, Guid correlationId, Action<T> messageConstructor);
+        void Send(IEnumerable<string> destinations, params object[] messages);
+        void Send<T>(IEnumerable<string> destinations, Action<T> messageConstructor);
 
         /// <summary>
         /// Gets the list of key/value pairs that will be in the header of
