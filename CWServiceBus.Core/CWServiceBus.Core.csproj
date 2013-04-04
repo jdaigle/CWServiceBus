@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Config\ITransportBuilder.cs" />
     <Compile Include="ControlMessage.cs" />
+    <Compile Include="Diagnostics\PerformanceCounters.cs" />
     <Compile Include="Dispatch\DispatchExtensions.cs" />
     <Compile Include="Dispatch\DispatchInfo.cs" />
     <Compile Include="Dispatch\MessageDispatcher.cs" />
@@ -97,10 +98,6 @@
     <Compile Include="WorkerThread.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CWServiceBus.Diagnostics\CWServiceBus.Diagnostics.csproj">
-      <Project>{BABB3653-C80B-4ABB-80E9-8DF1F8FE3A63}</Project>
-      <Name>CWServiceBus.Diagnostics</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
       <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
       <Name>CWServiceBus.Interfaces</Name>
