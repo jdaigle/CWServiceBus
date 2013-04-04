@@ -34,9 +34,6 @@
     <Reference Include="nunit.framework">
       <HintPath>..\tools\nunit\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="StructureMap">
-      <HintPath>..\external-bin\StructureMap.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -86,14 +83,6 @@
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
       <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
       <Name>CWServiceBus.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CWServiceBus.ServiceBroker\CWServiceBus.ServiceBroker.csproj">
-      <Project>{A476F8AF-5141-475F-8FFD-9876AA74B492}</Project>
-      <Name>CWServiceBus.ServiceBroker</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CWServiceBus.StructureMap\CWServiceBus.StructureMap.csproj">
-      <Project>{0596F84B-5850-4139-8A44-1EDF87598361}</Project>
-      <Name>CWServiceBus.StructureMap</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

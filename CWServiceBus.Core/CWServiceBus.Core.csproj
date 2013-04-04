@@ -66,6 +66,13 @@
     <Compile Include="Serializers\XmlTransportMessageSerializer.cs" />
     <Compile Include="Serializers\XML\XmlMessageSerializer.cs" />
     <Compile Include="MessageBusBuilder.cs" />
+    <Compile Include="ServiceBroker\ConfigurationExtensions.cs" />
+    <Compile Include="ServiceBroker\Config\ServiceBrokerTransportBuilder.cs" />
+    <Compile Include="ServiceBroker\ISqlServerTransactionWrapper.cs" />
+    <Compile Include="ServiceBroker\Message.cs" />
+    <Compile Include="ServiceBroker\ServiceBrokerWrapper.cs" />
+    <Compile Include="ServiceBroker\SqlServerTransactionWrapper.cs" />
+    <Compile Include="ServiceBroker\Transport\ServiceBrokerTransport.cs" />
     <Compile Include="Unicast\Sql\ISubscriptionCacheProvider.cs" />
     <Compile Include="Unicast\Sql\SqlCommandSet.cs" />
     <Compile Include="Unicast\Sql\SqlServerSubscriptionStorage.cs" />
