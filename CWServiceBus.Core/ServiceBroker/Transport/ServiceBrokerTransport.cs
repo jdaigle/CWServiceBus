@@ -18,7 +18,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
         private int maxRetries = 5;
         private int numberOfWorkerThreads = 1;
 
-        private static readonly int waitTimeout = 21600 * 1000; // wait 6 hours
+        private static readonly int waitTimeout = 60 * 60 * 1000; // wait 1 hour
         public string ListenerQueue { get; set; }
         public string ReturnAddress { get; set; }
 
@@ -136,7 +136,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
                     originalException = ((TransportMessageHandlingFailedException)e).OriginalException;
 
                 IncrementFailuresForMessage(messageId, originalException);
-
+                Logger.Error("Error Procesing Message", originalException);
                 OnFailedMessageProcessing(originalException);
             } finally {
                 if (!releasedWaitLock) {
@@ -148,7 +148,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
         public void ReceiveMessage(SqlTransaction transaction) {
             Message message = null;
             try {
-                message = ServiceBrokerWrapper.WaitAndReceive(transaction, this.ListenerQueue, waitTimeout); // Wait 6 hours
+                message = ServiceBrokerWrapper.WaitAndReceive(transaction, this.ListenerQueue, waitTimeout);
             } catch (Exception e) {
                 Logger.Error("Error in receiving message from queue.", e);
                 throw; // Throw to rollback 

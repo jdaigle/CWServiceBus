@@ -36,6 +36,18 @@ namespace CWServiceBus.FastServiceLocator
             return registration;
         }
 
+        public virtual FastContainerRegistration Register(Type type, Func<FastContainer, object> resolve)
+        {
+            AssertNotDisposed();
+            if (SupperLogging && Logger.IsDebugEnabled)
+            {
+                Logger.Debug(string.Format("Registering Wireup Callback for {0}", type));
+            }
+            var registration = new FastContainerRegistration(c => (object)resolve(c));
+            this.registrations[type] = registration;
+            return registration;
+        }
+
         public virtual FastContainerRegistration Register<TService>(TService instance)
         {
             AssertNotDisposed();

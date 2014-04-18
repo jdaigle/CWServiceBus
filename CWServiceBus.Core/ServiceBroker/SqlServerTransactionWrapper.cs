@@ -7,6 +7,8 @@ namespace CWServiceBus.ServiceBroker
     public class SqlServerTransactionWrapper : ISqlServerTransactionWrapper
     {
         [ThreadStatic]
+        private static int loopLevel = 0;
+        [ThreadStatic]
         private static SqlConnection connection;
         [ThreadStatic]
         private static SqlTransaction transaction;
@@ -21,20 +23,19 @@ namespace CWServiceBus.ServiceBroker
         private string connectionString;
         public static ILog Logger = LogManager.GetLogger(typeof(SqlServerTransactionWrapper));
 
-        public void RunInTransaction(Action<SqlTransaction> callback)
+        public void RunInTransaction(Action<SqlTransaction> callback, bool skipOpenConnection = false)
         {
-            bool closeConnection = connection == null;
-            bool disposeTransaction = transaction == null;
-
+            bool isTopLevel = loopLevel == 0;
+            loopLevel++;
             try
             {
-                if (connection == null)
+                if (connection == null && !skipOpenConnection)
                 {
                     connection = new SqlConnection(connectionString);
                     connection.Open();
                 }
 
-                if (transaction == null)
+                if (transaction == null && connection != null && !skipOpenConnection)
                 {
                     transactionId = Guid.NewGuid();
                     Logger.Debug(string.Format("Beginning Transaction [{0}]", transactionId));
@@ -44,7 +45,7 @@ namespace CWServiceBus.ServiceBroker
                 // The callback might rollback the transaction, we always commit it
                 callback(transaction);
 
-                if (disposeTransaction)
+                if (isTopLevel && transaction != null)
                 {
                     // We always commit our transactions, the callback might roll it back though
                     Logger.Debug(string.Format("Committing Transaction [{0}]", transactionId));
@@ -53,7 +54,7 @@ namespace CWServiceBus.ServiceBroker
             }
             catch (Exception e)
             {
-                if (disposeTransaction && transaction != null)
+                if (isTopLevel && transaction != null)
                 {
                     Logger.Debug(string.Format("Rolling Back Transaction with Error [{0}]", transactionId), e);
                     transaction.Rollback();
@@ -62,7 +63,10 @@ namespace CWServiceBus.ServiceBroker
             }
             finally
             {
-                if (disposeTransaction)
+                loopLevel--; // it is important we decrement the loopLevel first in the finally {} block so that
+                             // we start with a clean slate on the next message we process on this thread, regardless
+                             // of whether the code below throws an new exception or not.
+                if (isTopLevel && transaction != null)
                 {
                     if (transaction != null)
                     {
@@ -71,19 +75,16 @@ namespace CWServiceBus.ServiceBroker
                     transaction = null;
                 }
 
-                if (closeConnection)
+                if (isTopLevel && connection != null)
                 {
-                    if (connection != null)
+                    try
                     {
-                        try
-                        {
-                            connection.Close();
-                            connection.Dispose();
-                        }
-                        finally
-                        {
-                            connection = null;
-                        }
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    finally
+                    {
+                        connection = null;
                     }
                 }
             }

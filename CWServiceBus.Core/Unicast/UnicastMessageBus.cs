@@ -152,12 +152,12 @@ namespace CWServiceBus.Unicast
 
         public void SendLocal(params object[] messages)
         {
-            throw new NotImplementedException();
+            SendMessage(this.transport.ReturnAddress, null, MessageIntentEnum.Send, messages);
         }
 
         public void SendLocal<T>(Action<T> messageConstructor)
         {
-            throw new NotImplementedException();
+            ((IMessageBus)this).SendLocal(CreateInstance(messageConstructor));
         }
 
         void ISendOnlyMessageBus.Send(params object[] messages)
@@ -365,19 +365,37 @@ namespace CWServiceBus.Unicast
         private List<Type> GetFullTypes(IEnumerable<object> messages)
         {
             var types = new List<Type>();
-
             foreach (var m in messages)
             {
                 var s = m.GetType();
                 if (types.Contains(s))
+                {
                     continue;
+                }
                 types.Add(s);
-                foreach (var t in m.GetType().GetInterfaces())
+                foreach (var t in s.GetInterfaces())
+                {
                     if (messageMapper.IsMessageType(t))
+                    {
                         if (!types.Contains(t))
+                        {
                             types.Add(t);
+                        }
+                    }
+                }
+                var baseType = s.BaseType;
+                while (baseType != null && baseType != typeof(object))
+                {
+                    if (messageMapper.IsMessageType(baseType))
+                    {
+                        if (!types.Contains(baseType))
+                        {
+                            types.Add(baseType);
+                        }
+                    }
+                    baseType = baseType.BaseType;
+                }
             }
-
             return types;
         }
 

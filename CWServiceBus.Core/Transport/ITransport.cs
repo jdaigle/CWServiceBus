@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace CWServiceBus.Transport {
-    public interface ITransport {
+namespace CWServiceBus.Transport
+{
+    public interface ITransport
+    {
         void Start();
+
+        string ListenerQueue { get; }
+        string ReturnAddress { get; }
 
         int NumberOfWorkerThreads { get; }
         void ChangeNumberOfWorkerThreads(int targetNumberOfWorkerThreads);

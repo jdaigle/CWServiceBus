@@ -77,7 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CWServiceBus.Core\CWServiceBus.Core.csproj">
-      <Project>{EE848BE5-1F66-4F6C-9DB6-6DE1E36B0EDB}</Project>
+      <Project>{ee848be5-1f66-4f6c-9db6-6de1e36b0edb}</Project>
       <Name>CWServiceBus.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">

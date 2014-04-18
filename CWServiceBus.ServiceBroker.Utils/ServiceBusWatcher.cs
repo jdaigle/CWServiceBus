@@ -216,7 +216,7 @@ namespace CWServiceBus.ServiceBroker.Utils
             var count = GetPoisonMessageCountForQueue(connection, queue).First().Count;
             while (count > 0)
             {
-                var top100 = GetPoisonMessages(connection, queue, 1, 100, SortOrder.Ascending);
+                var top100 = GetPoisonMessages(connection, queue, 1, 100, SortOrder.Ascending).ToList(); // ToList() to buffer into memory and close the reader
                 foreach (var item in top100)
                 {
                     if (string.IsNullOrWhiteSpace(item.OriginService))

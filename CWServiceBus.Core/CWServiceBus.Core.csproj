@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net">
@@ -57,8 +59,6 @@
     <Compile Include="IMessageMapper.cs" />
     <Compile Include="Config\MessageEndpointMapping.cs" />
     <Compile Include="Config\MessageEndpointMappingCollection.cs" />
-    <Compile Include="InProc\InProcTransport.cs" />
-    <Compile Include="InProc\InProcTransportBuilder.cs" />
     <Compile Include="MessageTypeConventions.cs" />
     <Compile Include="Reflection\DelegateFactory.cs" />
     <Compile Include="Reflection\ExtensionMethods.cs" />
@@ -95,6 +95,7 @@
     <Compile Include="Unicast\ISubscriptionStorage.cs" />
     <Compile Include="Unicast\MessageContext.cs" />
     <Compile Include="Unicast\UnicastMessageBus.cs" />
+    <Compile Include="UnitOfWorkManager.cs" />
     <Compile Include="WorkerThread.cs" />
   </ItemGroup>
   <ItemGroup>
