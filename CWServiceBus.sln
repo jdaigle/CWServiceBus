@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30324.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Interfaces", "CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj", "{CE4C243C-D839-40A9-8EED-5F39F887643D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CWServiceBus.Core", "CWServiceBus.Core\CWServiceBus.Core.csproj", "{EE848BE5-1F66-4F6C-9DB6-6DE1E36B0EDB}"
