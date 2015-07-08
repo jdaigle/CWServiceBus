@@ -18,20 +18,6 @@ namespace CWServiceBus.FastServiceLocator
             container.FillProperties(target);
         }
 
-        public T Get<T>()
-        {
-            var instance = container.Resolve<T>();
-            if (instance == null)
-            {
-                if (typeof(T).GetConstructor(new Type[0]) == null)
-                {
-                    throw new MissingMethodException("Missing Default Parameterless Constructor For Type: " + typeof(T));
-                }
-                instance = Activator.CreateInstance<T>();
-            }
-            return instance;
-        }
-
         public IEnumerable<T> GetAll<T>()
         {
             yield return container.Resolve<T>();
@@ -51,19 +37,9 @@ namespace CWServiceBus.FastServiceLocator
             return instance;
         }
 
-        public IEnumerable<object> GetAll(Type type)
-        {
-            yield return container.Resolve(type);
-        }
-
         public void RegisterComponent<T>(T instance)
         {
             container.Register<T>(instance);
-        }
-
-        public void RegisterComponent(Type type, object instance)
-        {
-            container.Register(type, instance);
         }
 
         public IServiceLocator GetChildServiceLocator()

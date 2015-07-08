@@ -62,7 +62,7 @@ namespace CWServiceBus.Dispatch {
         }
 
         private void OnDispatching(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext) {
-            if (unitOfWorkManagers == null) unitOfWorkManagers = serviceLocator.GetAll<IManagesUnitOfWork>();
+            EnsureUnitOfWorkManagersLoaded();
             if (unitOfWorkManagers != null)
                 foreach (var unitOfWorkManager in unitOfWorkManagers)
                     unitOfWorkManager.Begin(childServiceLocator, messageContext);
@@ -74,7 +74,7 @@ namespace CWServiceBus.Dispatch {
         }
 
         private void OnDispatched(IServiceLocator childServiceLocator, IEnumerable<object> messages, IMessageContext messageContext, Exception e) {
-            if (unitOfWorkManagers == null) unitOfWorkManagers = serviceLocator.GetAll<IManagesUnitOfWork>();
+            EnsureUnitOfWorkManagersLoaded();
             if (unitOfWorkManagers != null)
                 foreach (var unitOfWorkManager in unitOfWorkManagers)
                     unitOfWorkManager.End(childServiceLocator, messageContext, e);
@@ -83,6 +83,20 @@ namespace CWServiceBus.Dispatch {
                     Messages = messages,
                     DispatchedWithError = e != null,
                 });
+            }
+        }
+
+        private void EnsureUnitOfWorkManagersLoaded()
+        {
+            if (unitOfWorkManagers == null)
+            {
+                lock (serviceLocator)
+                {
+                    if (unitOfWorkManagers == null)
+                    {
+                        unitOfWorkManagers = serviceLocator.GetAll<IManagesUnitOfWork>();
+                    }
+                }
             }
         }
 

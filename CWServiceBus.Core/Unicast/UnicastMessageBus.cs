@@ -16,19 +16,17 @@ namespace CWServiceBus.Unicast
 
         private readonly static ILog Logger = LogManager.GetLogger(typeof(UnicastMessageBus));
         private IMessageMapper messageMapper;
-        private ISubscriptionStorage subscriptionStorage;
         private ITransport transport;
         private IList<ITransport> additionalListeners = new List<ITransport>();
         private IMessageDispatcher messageDispatcher;
 
         public UnicastMessageBus() { }
 
-        public UnicastMessageBus(IMessageMapper messageMapper, ITransport transport, IMessageDispatcher messageDispatcher, ISubscriptionStorage subscriptionStorage)
+        public UnicastMessageBus(IMessageMapper messageMapper, ITransport transport, IMessageDispatcher messageDispatcher)
         {
             this.messageMapper = messageMapper;
             this.Transport = transport;
             this.messageDispatcher = messageDispatcher;
-            this.subscriptionStorage = subscriptionStorage;
         }
 
         public ITransport Transport
@@ -67,89 +65,6 @@ namespace CWServiceBus.Unicast
         private readonly IDictionary<Type, string> messageTypeToDestinationLookup = new Dictionary<Type, string>();
         private readonly ReaderWriterLockSlim messageTypeToDestinationLocker = new ReaderWriterLockSlim();
 
-        public void Publish<T>(params T[] messages)
-        {
-
-            if (subscriptionStorage == null)
-                throw new InvalidOperationException("Cannot publish - no subscription storage has been configured.");
-
-            if (messages == null || messages.Length == 0)
-            {
-                // Redirect (for exampple Bus.Publish<IFoo>();)
-                Publish(CreateInstance<T>(m => { }));
-                return;
-            }
-
-            var fullTypes = GetFullTypes(messages as object[]);
-            var subscribers = subscriptionStorage
-                .GetSubscriberServicesForMessage(fullTypes.Select(t => new MessageType(t)))
-                .ToList();
-
-            if (!subscribers.Any())
-            {
-                return;
-            }
-
-            SendMessage(subscribers, null, MessageIntentEnum.Publish, messages as object[]);
-        }
-
-        public void Publish<T>(Action<T> messageConstructor)
-        {
-            Publish(CreateInstance(messageConstructor));
-        }
-
-        public void Subscribe(Type messageType)
-        {
-            Subscribe(null, messageType);
-        }
-
-        public void Subscribe(string publishingService, Type messageType)
-        {
-            if (string.IsNullOrWhiteSpace(publishingService))
-            {
-                publishingService = GetDestinationServiceForMessage(messageType);
-            }
-            Logger.Info("Subscribing to " + messageType.AssemblyQualifiedName + " at publisher " + publishingService);
-            this.SetHeader(SubscriptionMessageType, messageType.AssemblyQualifiedName);
-            SendMessage(publishingService, null, MessageIntentEnum.Subscribe, new ControlMessage());
-        }
-
-        public void Subscribe<T>()
-        {
-            Subscribe(typeof(T));
-        }
-
-        public void Subscribe<T>(string publishingService)
-        {
-            Subscribe(publishingService, typeof(T));
-        }
-
-        public void Unsubscribe(Type messageType)
-        {
-            Unsubscribe(null, messageType);
-        }
-
-        public void Unsubscribe(string publishingService, Type messageType)
-        {
-            if (string.IsNullOrWhiteSpace(publishingService))
-            {
-                publishingService = GetDestinationServiceForMessage(messageType);
-            }
-            Logger.Info("Unsubscribing from " + messageType.AssemblyQualifiedName + " at publisher " + publishingService);
-            this.SetHeader(SubscriptionMessageType, messageType.AssemblyQualifiedName);
-            SendMessage(publishingService, null, MessageIntentEnum.Unsubscribe, new ControlMessage());
-        }
-
-        public void Unsubscribe<T>()
-        {
-            Unsubscribe(typeof(T));
-        }
-
-        public void Unsubscribe<T>(string publishingService)
-        {
-            Unsubscribe(publishingService, typeof(T));
-        }
-
         public void SendLocal(params object[] messages)
         {
             SendMessage(this.transport.ReturnAddress, null, MessageIntentEnum.Send, messages);
@@ -160,33 +75,33 @@ namespace CWServiceBus.Unicast
             ((IMessageBus)this).SendLocal(CreateInstance(messageConstructor));
         }
 
-        void ISendOnlyMessageBus.Send(params object[] messages)
+        void IMessageBus.Send(params object[] messages)
         {
             var destination = GetDestinationServiceForMessages(messages);
             SendMessage(destination, null, MessageIntentEnum.Send, messages);
         }
 
-        void ISendOnlyMessageBus.Send<T>(Action<T> messageConstructor)
+        void IMessageBus.Send<T>(Action<T> messageConstructor)
         {
             ((IMessageBus)this).Send(CreateInstance(messageConstructor));
         }
 
-        void ISendOnlyMessageBus.Send(string destinationService, params object[] messages)
+        void IMessageBus.Send(string destinationService, params object[] messages)
         {
             SendMessage(destinationService, null, MessageIntentEnum.Send, messages);
         }
 
-        void ISendOnlyMessageBus.Send<T>(string destinationService, Action<T> messageConstructor)
+        void IMessageBus.Send<T>(string destinationService, Action<T> messageConstructor)
         {
             SendMessage(destinationService, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
 
-        void ISendOnlyMessageBus.Send(IEnumerable<string> destinations, params object[] messages)
+        void IMessageBus.Send(IEnumerable<string> destinations, params object[] messages)
         {
             SendMessage(destinations, null, MessageIntentEnum.Send, messages);
         }
 
-        void ISendOnlyMessageBus.Send<T>(IEnumerable<string> destinations, Action<T> messageConstructor)
+        void IMessageBus.Send<T>(IEnumerable<string> destinations, Action<T> messageConstructor)
         {
             SendMessage(destinations, null, MessageIntentEnum.Send, CreateInstance(messageConstructor));
         }
@@ -226,7 +141,7 @@ namespace CWServiceBus.Unicast
             MapTransportMessageFor(messages, toSend);
 
             transport.Send(toSend, destinations);
-            OnMessageSent();
+            OnMessageSent(transport, destinations, messages);
         }
 
         private TransportMessage MapTransportMessageFor(object[] messages, TransportMessage toSend)
@@ -241,7 +156,7 @@ namespace CWServiceBus.Unicast
 
         private void Transport_FailedMessageProcessing(object sender, FailedMessageProcessingEventArgs e)
         {
-            OnMessageFailed();
+            OnMessageFailed((ITransport)sender);
         }
 
         private void Transport_TransportMessageReceived(object sender, TransportMessageReceivedEventArgs e)
@@ -249,17 +164,11 @@ namespace CWServiceBus.Unicast
             this.OutgoingHeaders.Clear();
             _messageBeingHandled = e.Message;
             Logger.Debug("Received transport message with ID " + e.Message.Id + " from sender " + e.Message.ReturnAddress);
-            OnMessageReceived();
-            if (e.Message.Body.Any(x => x is ControlMessage))
-            {
-                if (HandleControlMessage())
-                    return;
-            }
+            OnMessageReceived((ITransport)sender);
             var sw = Stopwatch.StartNew();
             try
             {
-                if (e.Message.MessageIntent == MessageIntentEnum.Send ||
-                    e.Message.MessageIntent == MessageIntentEnum.Publish)
+                if (e.Message.MessageIntent == MessageIntentEnum.Send)
                 {
                     using (var childServiceLocator = this.messageDispatcher.ServiceLocator.GetChildServiceLocator())
                     {
@@ -268,7 +177,7 @@ namespace CWServiceBus.Unicast
                     }
                 }
                 sw.Stop();
-                OnMessageHandled(sw.ElapsedMilliseconds, sw.ElapsedTicks);
+                OnMessageHandled((ITransport)sender, e.Message, sw.Elapsed.TotalMilliseconds, sw.ElapsedTicks);
             }
             catch (Exception ex)
             {
@@ -282,33 +191,6 @@ namespace CWServiceBus.Unicast
                 sw.Stop();
             }
             Logger.Debug("Finished handling message.");
-        }
-
-        private bool HandleControlMessage()
-        {
-            if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Subscribe ||
-                _messageBeingHandled.MessageIntent == MessageIntentEnum.Unsubscribe)
-            {
-                var messageTypeString = this.GetHeader(SubscriptionMessageType);
-                if (subscriptionStorage == null)
-                {
-                    var warning = string.Format("Subscription message from {0} arrived at this endpoint, yet this endpoint is not configured to be a publisher.", _messageBeingHandled.ReturnAddress);
-                    Logger.Warn(warning);
-                    return true;
-                }
-                if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Subscribe)
-                {
-                    Logger.Info("Subscribing " + _messageBeingHandled.ReturnAddress + " to message type " + messageTypeString);
-                    subscriptionStorage.Subscribe(_messageBeingHandled.ReturnAddress, new[] { new MessageType(messageTypeString) });
-                }
-                if (_messageBeingHandled.MessageIntent == MessageIntentEnum.Unsubscribe)
-                {
-                    Logger.Info("Unsubscribing " + _messageBeingHandled.ReturnAddress + " from message type " + messageTypeString);
-                    subscriptionStorage.Unsubscribe(_messageBeingHandled.ReturnAddress, new[] { new MessageType(messageTypeString) });
-                }
-                return true;
-            }
-            return false;
         }
 
         public void HandleCurrentMessageLater()
@@ -429,9 +311,25 @@ namespace CWServiceBus.Unicast
             messageTypeToDestinationLocker.EnterReadLock();
             var destinationFound = messageTypeToDestinationLookup.TryGetValue(messageType, out destination);
             messageTypeToDestinationLocker.ExitReadLock();
-
             if (destinationFound)
+            {
                 return destination;
+            }
+
+            if (!messageType.IsInterface)
+            {
+                var interfaces = messageType.GetInterfaces();
+                foreach (var _interface in interfaces)
+                {
+                    messageTypeToDestinationLocker.EnterReadLock();
+                    destinationFound = messageTypeToDestinationLookup.TryGetValue(_interface, out destination);
+                    messageTypeToDestinationLocker.ExitReadLock();
+                    if (destinationFound)
+                    {
+                        return destination;
+                    }
+                }
+            }
 
             if (messageMapper != null && !messageType.IsInterface)
             {
@@ -461,40 +359,40 @@ namespace CWServiceBus.Unicast
             }
         }
 
-        public event EventHandler MessageReceived;
-        public event EventHandler MessageSent;
-        public event EventHandler MessageFailed;
-        public event EventHandler<MessageHandledEventArgs> MessageHandled;
+        public event Action<ITransport> MessageReceived;
+        public event Action<ITransport, IEnumerable<string>, IEnumerable<object>> MessageSent;
+        public event Action<ITransport> MessageFailed;
+        public event Action<ITransport, TransportMessage, double> MessageHandled;
 
-        protected virtual void OnMessageReceived()
+        protected virtual void OnMessageReceived(ITransport transport)
         {
             if (MessageReceived != null)
             {
-                MessageReceived(this, EventArgs.Empty);
+                MessageReceived(transport);
             }
         }
 
-        protected virtual void OnMessageSent()
+        protected virtual void OnMessageSent(ITransport transport, IEnumerable<string> destinations, IEnumerable<object> messages)
         {
             if (MessageSent != null)
             {
-                MessageSent(this, EventArgs.Empty);
+                MessageSent(transport, destinations, messages);
             }
         }
 
-        protected virtual void OnMessageFailed()
+        protected virtual void OnMessageFailed(ITransport transport)
         {
             if (MessageFailed != null)
             {
-                MessageFailed(this, EventArgs.Empty);
+                MessageFailed(transport);
             }
         }
 
-        protected virtual void OnMessageHandled(long elapsedMilliseconds, long elapsedTicks)
+        protected virtual void OnMessageHandled(ITransport transport, TransportMessage transportMessage, double elapsedMilliseconds, long elapsedTicks)
         {
             if (MessageHandled != null)
             {
-                MessageHandled(this, new MessageHandledEventArgs() { ElapsedMilliseconds = elapsedMilliseconds, ElapsedTicks = elapsedTicks });
+                MessageHandled(transport, transportMessage, elapsedMilliseconds);
             }
         }
     }

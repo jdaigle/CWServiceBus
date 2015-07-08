@@ -73,6 +73,14 @@ namespace CWServiceBus.Transport
         /// </summary>
         public List<HeaderInfo> Headers { get; set; }
 
+        private string headersString;
+        [XmlIgnore]
+        public string HeadersString
+        {
+            get { return headersString; }
+            set { headersString = value; }
+        }
+
         private object[] body;
 
         /// <summary>
@@ -90,7 +98,6 @@ namespace CWServiceBus.Transport
 
         private Stream bodyStream;
 
-
         /// <summary>
         /// Gets/sets a stream to the body content of the message
         /// </summary>
@@ -103,6 +110,14 @@ namespace CWServiceBus.Transport
             set { bodyStream = value; }
         }
 
+        private string bodyString;
+        [XmlIgnore]
+        public string BodyString
+        {
+            get { return bodyString; }
+            set { bodyString = value; }
+        }
+
         private List<object> messages;
 
         /// <summary>
@@ -111,7 +126,6 @@ namespace CWServiceBus.Transport
         [XmlIgnore]
         public List<object> Messages {
             get { return messages; }
-            set { messages = value; }
         }
 
         /// <summary>

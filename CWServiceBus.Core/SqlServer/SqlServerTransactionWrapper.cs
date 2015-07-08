@@ -2,7 +2,7 @@
 using System.Data.SqlClient;
 using log4net;
 
-namespace CWServiceBus.ServiceBroker
+namespace CWServiceBus.SqlServer
 {
     public class SqlServerTransactionWrapper : ISqlServerTransactionWrapper
     {

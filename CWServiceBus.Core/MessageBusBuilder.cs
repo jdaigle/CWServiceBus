@@ -71,17 +71,14 @@ namespace CWServiceBus {
             var transport = TransportBuilder.Build();
 
             var messageDispatcher = new MessageDispatcher(ServiceLocator, this.MessageHandlers);
-            var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher, SubscriptionStorage);
+            var messageBus = new UnicastMessageBus(messageMapper, transport, messageDispatcher);
             messageBus.MapMessageTypesToAddress(typesToEndpoints);
 
-            if (DiagnosticsPerfCountersEnabled)
-            {
-                var performanceCounters = new PerformanceCounters(TransportBuilder.EndpointName);
-                messageBus.MessageReceived += (o, e) => performanceCounters.OnMessageReceived();
-                messageBus.MessageSent += (o, e) => performanceCounters.OnMessageSent();
-                messageBus.MessageFailed += (o, e) => performanceCounters.OnMessageFailure();
-                messageBus.MessageHandled += (o, e) => performanceCounters.OnMessageHandled(e.ElapsedMilliseconds, e.ElapsedTicks);
-            }
+            var performanceCounters = new PerformanceCounters();
+            messageBus.MessageReceived += performanceCounters.OnMessageReceived;
+            messageBus.MessageSent += performanceCounters.OnMessageSent;
+            messageBus.MessageFailed += performanceCounters.OnMessageFailure;
+            messageBus.MessageHandled += performanceCounters.OnMessageHandled;
 
             return messageBus;
         }
@@ -133,7 +130,5 @@ namespace CWServiceBus {
         public MessageHandlerCollection MessageHandlers { get; private set; }
         public IMessageSerializer MessageSerializer { get; private set; }
         public ITransportBuilder TransportBuilder { get; set; }
-        public ISubscriptionStorage SubscriptionStorage { get; set; }
-        public bool DiagnosticsPerfCountersEnabled { get; set; }
     }
 }

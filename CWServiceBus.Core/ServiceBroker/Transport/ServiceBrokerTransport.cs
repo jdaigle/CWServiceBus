@@ -8,6 +8,7 @@ using System.Threading;
 using CWServiceBus.Transport;
 using log4net;
 using System.Reflection;
+using CWServiceBus.SqlServer;
 
 namespace CWServiceBus.ServiceBroker.Transport {
     public class ServiceBrokerTransport : ITransport {
@@ -18,7 +19,7 @@ namespace CWServiceBus.ServiceBroker.Transport {
         private int maxRetries = 5;
         private int numberOfWorkerThreads = 1;
 
-        private static readonly int waitTimeout = 60 * 60 * 1000; // wait 1 hour
+        private static readonly int waitTimeout = 15 * 60 * 1000; // wait 15 minutes
         public string ListenerQueue { get; set; }
         public string ReturnAddress { get; set; }
 
@@ -497,9 +498,11 @@ namespace CWServiceBus.ServiceBroker.Transport {
         }
 
         private static string FormatErrorMessage(Exception e) {
-            var message = "[" + e.GetType().ToString() + ": " + e.Message + "] " + Environment.NewLine + e.StackTrace;
+            var message = e.GetType().ToString() + ": " + e.Message + Environment.NewLine + e.StackTrace;
             if (e.InnerException != null)
+            {
                 message = message + Environment.NewLine + Environment.NewLine + FormatErrorMessage(e.InnerException);
+            }
             return message;
         }
 

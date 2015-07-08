@@ -9,5 +9,6 @@ namespace CWServiceBus.ServiceBroker.Utils
         public string Queue { get; set; }
         public string QueueService { get; set; }
         public string OriginService { get; set; }
+        public string ErrorMessage { get; set; }
     }
 }

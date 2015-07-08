@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CWServiceBus</RootNamespace>
     <AssemblyName>CWServiceBus.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,10 +33,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net">
-      <HintPath>..\external-bin\log4net.dll</HintPath>
+      <HintPath>..\..\external-bin\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -47,7 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config\ITransportBuilder.cs" />
-    <Compile Include="ControlMessage.cs" />
     <Compile Include="Diagnostics\PerformanceCounters.cs" />
     <Compile Include="Dispatch\DispatchExtensions.cs" />
     <Compile Include="Dispatch\DispatchInfo.cs" />
@@ -56,10 +58,22 @@
     <Compile Include="FastServiceLocator\FastContainer.cs" />
     <Compile Include="FastServiceLocator\FastContainerRegistration.cs" />
     <Compile Include="FastServiceLocator\FastServiceLocatorImpl.cs" />
+    <Compile Include="IManagesUnitOfWork.cs" />
+    <Compile Include="IMessage.cs" />
+    <Compile Include="IMessageBus.cs" />
+    <Compile Include="IMessageContext.cs" />
+    <Compile Include="IMessageCreator.cs" />
+    <Compile Include="IMessageDispatcher.cs" />
+    <Compile Include="IMessageHandler.cs" />
     <Compile Include="IMessageMapper.cs" />
     <Compile Include="Config\MessageEndpointMapping.cs" />
     <Compile Include="Config\MessageEndpointMappingCollection.cs" />
+    <Compile Include="IMessageSerializer.cs" />
+    <Compile Include="IServiceLocator.cs" />
+    <Compile Include="MessageBusExtensionsMethods.cs" />
+    <Compile Include="MessageDispatcherEventArgs.cs" />
     <Compile Include="MessageTypeConventions.cs" />
+    <Compile Include="Diagnostics\Metrics.cs" />
     <Compile Include="Reflection\DelegateFactory.cs" />
     <Compile Include="Reflection\ExtensionMethods.cs" />
     <Compile Include="Reflection\MessageMapper.cs" />
@@ -69,14 +83,17 @@
     <Compile Include="MessageBusBuilder.cs" />
     <Compile Include="ServiceBroker\ConfigurationExtensions.cs" />
     <Compile Include="ServiceBroker\Config\ServiceBrokerTransportBuilder.cs" />
-    <Compile Include="ServiceBroker\ISqlServerTransactionWrapper.cs" />
+    <Compile Include="SqlServer\Backoff.cs" />
+    <Compile Include="SqlServer\ConfigurationExtensions.cs" />
+    <Compile Include="SqlServer\ISqlServerTransactionWrapper.cs" />
     <Compile Include="ServiceBroker\Message.cs" />
     <Compile Include="ServiceBroker\ServiceBrokerWrapper.cs" />
-    <Compile Include="ServiceBroker\SqlServerTransactionWrapper.cs" />
+    <Compile Include="SqlServer\QueueNotFoundException.cs" />
+    <Compile Include="SqlServer\SqlServerTransport.cs" />
+    <Compile Include="SqlServer\SqlServerTransportBuilder.cs" />
+    <Compile Include="SqlServer\SqlServerTransactionWrapper.cs" />
     <Compile Include="ServiceBroker\Transport\ServiceBrokerTransport.cs" />
-    <Compile Include="Unicast\Sql\ISubscriptionCacheProvider.cs" />
-    <Compile Include="Unicast\Sql\SqlCommandSet.cs" />
-    <Compile Include="Unicast\Sql\SqlServerSubscriptionStorage.cs" />
+    <Compile Include="SqlServer\SqlCommands.cs" />
     <Compile Include="Transport\AbortHandlingCurrentMessageException.cs" />
     <Compile Include="Transport\TransportMessageFaultEventArgs.cs" />
     <Compile Include="Transport\FailedMessageProcessingEventArgs.cs" />
@@ -88,21 +105,12 @@
     <Compile Include="Transport\TransportMessageHandlingFailedException.cs" />
     <Compile Include="Transport\TransportMessageReceivedEventArgs.cs" />
     <Compile Include="IStartableMessageBus.cs" />
-    <Compile Include="Unicast\InMemorySubscriptionStorage.cs" />
-    <Compile Include="Unicast\MessageHandledEventArgs.cs" />
     <Compile Include="Unicast\MessageType.cs" />
     <Compile Include="Transport\TransportMessage.cs" />
-    <Compile Include="Unicast\ISubscriptionStorage.cs" />
     <Compile Include="Unicast\MessageContext.cs" />
     <Compile Include="Unicast\UnicastMessageBus.cs" />
     <Compile Include="UnitOfWorkManager.cs" />
     <Compile Include="WorkerThread.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CWServiceBus.Interfaces\CWServiceBus.Interfaces.csproj">
-      <Project>{CE4C243C-D839-40A9-8EED-5F39F887643D}</Project>
-      <Name>CWServiceBus.Interfaces</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

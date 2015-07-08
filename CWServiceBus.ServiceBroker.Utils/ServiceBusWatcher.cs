@@ -139,6 +139,7 @@ namespace CWServiceBus.ServiceBroker.Utils
                             Queue = reader.GetString(2),
                             QueueService = reader.GetString(3),
                             OriginService = reader.GetString(4),
+                            ErrorMessage = reader.GetString(5),
                         };
                     }
                 }
@@ -158,7 +159,7 @@ namespace CWServiceBus.ServiceBroker.Utils
                 param.DbType = DbType.Guid;
                 cmd.Parameters.Add(param);
                 cmd.CommandText = Query_PosionMessage;
-                using (var reader = (SqlDataReader)cmd.ExecuteReader())
+                using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
@@ -275,14 +276,20 @@ WHERE p.index_id IN (1, 0) AND q.name IN ({0});
         private static readonly string Query_PosionMessages = @"
 SELECT * FROM
  (SELECT 
-	MessageId,
-	InsertDateTime,
-	QueueName,
-	QueueService,
-	OriginService,
-	ROW_NUMBER() OVER (ORDER BY InsertDateTime {0}) as RowNumber
-	FROM FailedMessage WITH (NOLOCK)
-    WHERE QueueName = @queue) _
+    MessageId,
+    InsertDateTime,
+    QueueName,
+    QueueService,
+    OriginService,
+    CASE
+        WHEN CHARINDEX(CHAR(13), ErrorMessage) > 0
+            THEN SUBSTRING(ErrorMessage, 0, CHARINDEX(CHAR(13), ErrorMessage) - 1)
+        ELSE
+            SUBSTRING(ErrorMessage, 0, 100)
+    END AS ErrorMessage,
+    ROW_NUMBER() OVER (ORDER BY InsertDateTime {0}) as RowNumber
+    FROM FailedMessage WITH (NOLOCK)
+    WHERE QueueName = @queue) _z
 WHERE RowNumber BETWEEN @first AND @last;
 ";
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 
-namespace CWServiceBus.ServiceBroker
+namespace CWServiceBus.SqlServer
 {
     public interface ISqlServerTransactionWrapper
     {

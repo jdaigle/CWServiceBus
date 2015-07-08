@@ -3,20 +3,21 @@ using CWServiceBus.Serializers;
 using CWServiceBus.ServiceBroker.Transport;
 using CWServiceBus.Transport;
 using System.Collections.Generic;
-using CWServiceBus.SqlServer;
 
-namespace CWServiceBus.ServiceBroker.Config {
-    public class ServiceBrokerTransportBuilder : ITransportBuilder {
+namespace CWServiceBus.SqlServer
+{
+    public class SqlServerTransportBuilder : ITransportBuilder {
 
-        public ServiceBrokerTransportBuilder(MessageBusBuilder messageBusBuilder) {
+        public SqlServerTransportBuilder(MessageBusBuilder messageBusBuilder)
+        {
             this.MessageBusBuilder = messageBusBuilder;
+            this.MessageBusBuilder.MessageTypeConventions.AddConvention(t => t == typeof(HeaderInfo));
         }
 
         public MessageBusBuilder MessageBusBuilder { get; private set; }
 
         public string ListenerQueue { get; set; }
-        public string ReturnAddress { get; set; }
-        public string ServiceBrokerConnectionString { get; set; }
+        public string ConnectionString { get; set; }
 
         private int maxRetries = 5;
         public int MaxRetries {
@@ -36,14 +37,13 @@ namespace CWServiceBus.ServiceBroker.Config {
         }
 
         public ITransport Build() {
-            var transportMessageSerializer = new XmlTransportMessageSerializer(MessageBusBuilder.MessageSerializer);
-            var transport = new ServiceBrokerTransport(ListenerQueue, ReturnAddress, new SqlServerTransactionWrapper(ServiceBrokerConnectionString), transportMessageSerializer, NumberOfWorkerThreads);
+            var transport = new SqlServerTransport(ListenerQueue, new SqlServerTransactionWrapper(ConnectionString), MessageBusBuilder.MessageSerializer, NumberOfWorkerThreads);
             transport.MaxRetries = this.MaxRetries;
             transport.ForwardFaultsTo(faultForwardDestinations);
             return transport;
         }
 
 
-        public string EndpointName { get { return ReturnAddress; } }
+        public string EndpointName { get { return ListenerQueue; } }
     }
 }

@@ -10,9 +10,6 @@
     public enum MessageIntentEnum
     {
         Send,
-        Publish,
-        Subscribe,
-        Unsubscribe,
         FaultNotification
     }
 }
